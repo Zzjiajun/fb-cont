@@ -1,0 +1,286 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="cn.itcast.hotel.dao.DmConditionDao">
+
+    <resultMap type="cn.itcast.hotel.entity.DmCondition" id="DmConditionMap">
+        <result property="id" column="id" jdbcType="INTEGER"/>
+        <result property="userName" column="user_name" jdbcType="VARCHAR"/>
+        <result property="accessAddress" column="access_address" jdbcType="VARCHAR"/>
+        <result property="ipCountry" column="ip_country" jdbcType="VARCHAR"/>
+        <result property="timeZone" column="time_zone" jdbcType="INTEGER"/>
+        <result property="timeContinent" column="time_continent" jdbcType="VARCHAR"/>
+        <result property="isChinese" column="is_chinese" jdbcType="INTEGER"/>
+        <result property="isMobile" column="is_mobile" jdbcType="INTEGER"/>
+        <result property="isSpecificDevice" column="is_specific_device" jdbcType="INTEGER"/>
+        <result property="isFbclid" column="is_fbclid" jdbcType="INTEGER"/>
+        <result property="createTime" column="create_time" jdbcType="TIMESTAMP"/>
+        <result property="updateTime" column="update_time" jdbcType="TIMESTAMP"/>
+        <result property="isIp" column="is_ip" jdbcType="INTEGER"/>
+        <result property="isVpn" column="is_vpn" jdbcType="INTEGER"/>
+        <result property="ipLimits" column="ip_limits" jdbcType="INTEGER"/>
+        <result property="ipWhite" column="ip_white" jdbcType="INTEGER"/>
+        <result property="whiteList" column="white_list" jdbcType="VARCHAR"/>
+    </resultMap>
+
+    <select id="getAll" resultMap="DmConditionMap">
+        select * from dm_condition
+        <!--查询所有-->
+    </select>
+    <!--查询单个-->
+    <select id="queryById" resultMap="DmConditionMap">
+        select * from dm_condition
+        <where>
+        <if test="id != null">
+            and id = #{id}
+        </if>
+        <if test="userName != null and userName != ''">
+            and user_name = #{userName}
+        </if>
+        <if test="accessAddress != null and accessAddress != ''">
+            and access_address = #{accessAddress}
+        </if>
+        <if test="ipCountry != null and ipCountry != ''">
+            and ip_country = #{ipCountry}
+        </if>
+        <if test="timeZone != null">
+            and time_zone = #{timeZone}
+        </if>
+        <if test="timeContinent != null and timeContinent != ''">
+            and time_continent = #{timeContinent}
+        </if>
+        <if test="isChinese != null">
+            and is_chinese = #{isChinese}
+        </if>
+        <if test="isMobile != null">
+            and is_mobile = #{isMobile}
+        </if>
+        <if test="isSpecificDevice != null">
+            and is_specific_device = #{isSpecificDevice}
+        </if>
+        <if test="isFbclid != null">
+            and is_fbclid = #{isFbclid}
+        </if>
+        <if test="createTime != null">
+            and create_time = #{createTime}
+        </if>
+        <if test="updateTime != null">
+            and update_time = #{updateTime}
+        </if>
+        <if test="isIp != null">
+            and is_ip = #{isIp}
+        </if>
+        <if test="isVpn != null">
+            and is_vpn = #{isVpn}
+        </if>
+        <if test="vpnCode != null">
+            and vpn_code = #{vpnCode}
+        </if>
+        <if test="ipLimits != null">
+            and ip_limits= #{ipLimits}
+        </if>
+        <if test="ipWhite != null">
+            and ip_white = #{ipWhite}
+        </if>
+        <if test="whiteList != null">
+            and white_list = #{whiteList}
+        </if>
+        </where>
+    </select>
+
+    <!--查询指定行数据-->
+    <select id="queryAllByLimit" resultMap="DmConditionMap">
+        select *
+        from dm_condition
+        <where>
+            <if test="id != null">
+                and id = #{id}
+            </if>
+            <if test="userName != null and userName != ''">
+                and user_name = #{userName}
+            </if>
+            <if test="accessAddress != null and accessAddress != ''">
+                and access_address = #{accessAddress}
+            </if>
+            <if test="ipCountry != null and ipCountry != ''">
+                and ip_country = #{ipCountry}
+            </if>
+            <if test="timeZone != null">
+                and time_zone = #{timeZone}
+            </if>
+            <if test="timeContinent != null and timeContinent != ''">
+                and time_continent = #{timeContinent}
+            </if>
+            <if test="isChinese != null">
+                and is_chinese = #{isChinese}
+            </if>
+            <if test="isMobile != null">
+                and is_mobile = #{isMobile}
+            </if>
+            <if test="isSpecificDevice != null">
+                and is_specific_device = #{isSpecificDevice}
+            </if>
+            <if test="isFbclid != null">
+                and is_fbclid = #{isFbclid}
+            </if>
+            <if test="createTime != null">
+                and create_time = #{createTime}
+            </if>
+            <if test="updateTime != null">
+                and update_time = #{updateTime}
+            </if>
+            <if test="isIp != null">
+                and is_ip = #{isIp}
+            </if>
+            <if test="ipLimits != null">
+                and ip_limits= #{ipLimits}
+            </if>
+            <if test="ipWhite != null">
+                and ip_white = #{ipWhite}
+            </if>
+            <if test="whiteList != null">
+                and white_list = #{whiteList}
+            </if>
+        </where>
+        limit #{pageable.offset}, #{pageable.pageSize}
+    </select>
+
+    <!--统计总行数-->
+    <select id="count" resultType="java.lang.Long">
+        select count(1)
+        from dm_condition
+        <where>
+            <if test="id != null">
+                and id = #{id}
+            </if>
+            <if test="userName != null and userName != ''">
+                and user_name = #{userName}
+            </if>
+            <if test="accessAddress != null and accessAddress != ''">
+                and access_address = #{accessAddress}
+            </if>
+            <if test="ipCountry != null and ipCountry != ''">
+                and ip_country = #{ipCountry}
+            </if>
+            <if test="timeZone != null">
+                and time_zone = #{timeZone}
+            </if>
+            <if test="timeContinent != null and timeContinent != ''">
+                and time_continent = #{timeContinent}
+            </if>
+            <if test="isChinese != null">
+                and is_chinese = #{isChinese}
+            </if>
+            <if test="isMobile != null">
+                and is_mobile = #{isMobile}
+            </if>
+            <if test="isSpecificDevice != null">
+                and is_specific_device = #{isSpecificDevice}
+            </if>
+            <if test="isFbclid != null">
+                and is_fbclid = #{isFbclid}
+            </if>
+            <if test="createTime != null">
+                and create_time = #{createTime}
+            </if>
+            <if test="updateTime != null">
+                and update_time = #{updateTime}
+            </if>
+            <if test="isIp != null">
+                and is_ip = #{isIp}
+            </if>
+            <if test="ipLimits != null">
+                and ip_limits= #{ipLimits}
+            </if>
+            <if test="ipWhite != null">
+                and ip_white = #{ipWhite}
+            </if>
+            <if test="whiteList != null">
+                and white_list = #{whiteList}
+            </if>
+        </where>
+    </select>
+
+    <!--新增所有列-->
+    <insert id="insert" keyProperty="id" useGeneratedKeys="true">
+        insert into dm_condition(user_nameaccess_addressip_countrytime_zonetime_continentis_chineseis_mobileis_specific_deviceis_fbclidcreate_timeupdate_timeis_ip)
+        values (#{userName}#{accessAddress}#{ipCountry}#{timeZone}#{timeContinent}#{isChinese}#{isMobile}#{isSpecificDevice}#{isFbclid}#{createTime}#{updateTime}#{isIp})
+    </insert>
+
+    <insert id="insertBatch" keyProperty="id" useGeneratedKeys="true">
+        insert into dm_condition(user_nameaccess_addressip_countrytime_zonetime_continentis_chineseis_mobileis_specific_deviceis_fbclidcreate_timeupdate_timeis_ip)
+        values
+        <foreach collection="entities" item="entity" separator=",">
+        (#{entity.userName}#{entity.accessAddress}#{entity.ipCountry}#{entity.timeZone}#{entity.timeContinent}#{entity.isChinese}#{entity.isMobile}#{entity.isSpecificDevice}#{entity.isFbclid}#{entity.createTime}#{entity.updateTime}#{entity.isIp})
+        </foreach>
+    </insert>
+
+    <insert id="insertOrUpdateBatch" keyProperty="id" useGeneratedKeys="true">
+        insert into dm_condition(user_nameaccess_addressip_countrytime_zonetime_continentis_chineseis_mobileis_specific_deviceis_fbclidcreate_timeupdate_timeis_ip)
+        values
+        <foreach collection="entities" item="entity" separator=",">
+            (#{entity.userName}#{entity.accessAddress}#{entity.ipCountry}#{entity.timeZone}#{entity.timeContinent}#{entity.isChinese}#{entity.isMobile}#{entity.isSpecificDevice}#{entity.isFbclid}#{entity.createTime}#{entity.updateTime}#{entity.isIp})
+        </foreach>
+        on duplicate key update
+user_name = values(user_name)access_address = values(access_address)ip_country = values(ip_country)time_zone = values(time_zone)time_continent = values(time_continent)is_chinese = values(is_chinese)is_mobile = values(is_mobile)is_specific_device = values(is_specific_device)is_fbclid = values(is_fbclid)create_time = values(create_time)update_time = values(update_time)is_ip = values(is_ip)
+    </insert>
+
+    <!--通过主键修改数据-->
+    <update id="update">
+        update dm_condition
+        <set>
+            <if test="userName != null and userName != ''">
+                user_name = #{userName},
+            </if>
+            <if test="accessAddress != null and accessAddress != ''">
+                access_address = #{accessAddress},
+            </if>
+            <if test="ipCountry != null and ipCountry != ''">
+                ip_country = #{ipCountry},
+            </if>
+            <if test="timeZone != null">
+                time_zone = #{timeZone},
+            </if>
+            <if test="timeContinent != null and timeContinent != ''">
+                time_continent = #{timeContinent},
+            </if>
+            <if test="isChinese != null">
+                is_chinese = #{isChinese},
+            </if>
+            <if test="isMobile != null">
+                is_mobile = #{isMobile},
+            </if>
+            <if test="isSpecificDevice != null">
+                is_specific_device = #{isSpecificDevice},
+            </if>
+            <if test="isFbclid != null">
+                is_fbclid = #{isFbclid},
+            </if>
+            <if test="createTime != null">
+                create_time = #{createTime},
+            </if>
+            <if test="updateTime != null">
+                update_time = #{updateTime},
+            </if>
+            <if test="isIp != null">
+                is_ip = #{isIp},
+            </if>
+            <if test="ipLimits != null">
+                and ip_limits= #{ipLimits}
+            </if>
+            <if test="ipWhite != null">
+                and ip_white = #{ipWhite}
+            </if>
+            <if test="whiteList != null">
+                and white_list = #{whiteList}
+            </if>
+        </set>
+        where id = #{id}
+    </update>
+
+    <!--通过主键删除-->
+    <delete id="deleteById">
+        delete from dm_condition where id = #{id}
+    </delete>
+
+</mapper>
+

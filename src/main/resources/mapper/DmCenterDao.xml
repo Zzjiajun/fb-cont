@@ -1,0 +1,275 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="cn.itcast.hotel.dao.DmCenterDao">
+
+    <resultMap type="cn.itcast.hotel.entity.DmCenter" id="DmCenterMap">
+        <result property="id" column="id" jdbcType="INTEGER"/>
+        <result property="userName" column="user_name" jdbcType="VARCHAR"/>
+        <result property="region" column="region" jdbcType="VARCHAR"/>
+        <result property="pixel" column="pixel" jdbcType="VARCHAR"/>
+        <result property="link" column="link" jdbcType="VARCHAR"/>
+        <result property="domain" column="domain" jdbcType="VARCHAR"/>
+        <result property="secondaryDomain" column="secondary_domain" jdbcType="VARCHAR"/>
+        <result property="serialNumber" column="serial_number" jdbcType="VARCHAR"/>
+        <result property="visitsNumber" column="visits_number" jdbcType="INTEGER"/>
+        <result property="clicksNumber" column="clicks_number" jdbcType="INTEGER"/>
+        <result property="createTime" column="create_time" jdbcType="TIMESTAMP"/>
+        <result property="updateTime" column="update_time" jdbcType="TIMESTAMP"/>
+        <result property="displayOption" column="display_option" jdbcType="INTEGER"/>
+        <result property="diversion" column="diversion" jdbcType="INTEGER"/>
+        <result property="trolls" column="trolls" jdbcType="INTEGER"/>
+    </resultMap>
+
+    <!--查询单个-->
+    <select id="queryById" resultMap="DmCenterMap">
+        select
+            *
+        from dm_center
+        where id = #{id}
+    </select>
+
+    <!--查询指定行数据-->
+    <select id="queryAllByLimit" resultMap="DmCenterMap">
+        select
+iduser_nameregionpixellinkdomainsecondary_domainserial_numbervisits_numberclicks_numbercreate_timeupdate_timedisplay_optiondiversion
+        from dm_center
+        <where>
+            <if test="id != null">
+                and id = #{id}
+            </if>
+            <if test="userName != null and userName != ''">
+                and user_name = #{userName}
+            </if>
+            <if test="region != null and region != ''">
+                and region = #{region}
+            </if>
+            <if test="pixel != null and pixel != ''">
+                and pixel = #{pixel}
+            </if>
+            <if test="link != null and link != ''">
+                and link = #{link}
+            </if>
+            <if test="domain != null and domain != ''">
+                and domain = #{domain}
+            </if>
+            <if test="secondaryDomain != null and secondaryDomain != ''">
+                and secondary_domain = #{secondaryDomain}
+            </if>
+            <if test="serialNumber != null and serialNumber != ''">
+                and serial_number = #{serialNumber}
+            </if>
+            <if test="visitsNumber != null">
+                and visits_number = #{visitsNumber}
+            </if>
+            <if test="clicksNumber != null">
+                and clicks_number = #{clicksNumber}
+            </if>
+            <if test="createTime != null">
+                and create_time = #{createTime}
+            </if>
+            <if test="updateTime != null">
+                and update_time = #{updateTime}
+            </if>
+            <if test="displayOption != null">
+                and display_option = #{displayOption}
+            </if>
+            <if test="diversion != null">
+                and diversion = #{diversion}
+            </if>
+            <if test="trolls != null">
+                and trolls = #{trolls}
+            </if>
+        </where>
+        limit #{pageable.offset}, #{pageable.pageSize}
+    </select>
+
+    <!--统计总行数-->
+    <select id="count" resultType="java.lang.Long">
+        select count(1)
+        from dm_center
+        <where>
+            <if test="id != null">
+                and id = #{id}
+            </if>
+            <if test="userName != null and userName != ''">
+                and user_name = #{userName}
+            </if>
+            <if test="region != null and region != ''">
+                and region = #{region}
+            </if>
+            <if test="pixel != null and pixel != ''">
+                and pixel = #{pixel}
+            </if>
+            <if test="link != null and link != ''">
+                and link = #{link}
+            </if>
+            <if test="domain != null and domain != ''">
+                and domain = #{domain}
+            </if>
+            <if test="secondaryDomain != null and secondaryDomain != ''">
+                and secondary_domain = #{secondaryDomain}
+            </if>
+            <if test="serialNumber != null and serialNumber != ''">
+                and serial_number = #{serialNumber}
+            </if>
+            <if test="visitsNumber != null">
+                and visits_number = #{visitsNumber}
+            </if>
+            <if test="clicksNumber != null">
+                and clicks_number = #{clicksNumber}
+            </if>
+            <if test="createTime != null">
+                and create_time = #{createTime}
+            </if>
+            <if test="updateTime != null">
+                and update_time = #{updateTime}
+            </if>
+            <if test="displayOption != null">
+                and display_option = #{displayOption}
+            </if>
+            <if test="diversion != null">
+                and diversion = #{diversion}
+            </if>
+            <if test="trolls != null">
+                and trolls = #{trolls}
+            </if>
+        </where>
+    </select>
+
+    <select id="getAll" resultMap="DmCenterMap">
+        select * from dm_center
+        <!--查询所有-->
+    </select>
+
+    <select id="query" resultMap="DmCenterMap">
+        select * from dm_center
+        <where>
+            <if test="id != null">
+                and id = #{id}
+            </if>
+            <if test="userName != null and userName != ''">
+                and user_name = #{userName}
+            </if>
+            <if test="region != null and region != ''">
+                and region = #{region}
+            </if>
+            <if test="pixel != null and pixel != ''">
+                and pixel = #{pixel}
+            </if>
+            <if test="link != null and link != ''">
+                and link = #{link}
+            </if>
+            <if test="domain != null and domain != ''">
+                and domain = #{domain}
+            </if>
+            <if test="secondaryDomain != null and secondaryDomain != ''">
+                and secondary_domain = #{secondaryDomain}
+            </if>
+            <if test="serialNumber != null and serialNumber != ''">
+                and serial_number = #{serialNumber}
+            </if>
+            <if test="visitsNumber != null">
+                and visits_number = #{visitsNumber}
+            </if>
+            <if test="clicksNumber != null">
+                and clicks_number = #{clicksNumber}
+            </if>
+            <if test="createTime != null">
+                and create_time = #{createTime}
+            </if>
+            <if test="updateTime != null">
+                and update_time = #{updateTime}
+            </if>
+            <if test="displayOption != null">
+                and display_option = #{displayOption}
+            </if>
+            <if test="diversion != null">
+                and diversion = #{diversion}
+            </if>
+            <if test="trolls != null">
+                and trolls = #{trolls}
+            </if>
+        </where>
+    </select>
+
+    <!--新增所有列-->
+    <insert id="insert" keyProperty="id" useGeneratedKeys="true">
+        insert into dm_center(user_nameregionpixellinkdomainsecondary_domainserial_numbervisits_numberclicks_numbercreate_timeupdate_timedisplay_optiondiversion)
+        values (#{userName}#{region}#{pixel}#{link}#{domain}#{secondaryDomain}#{serialNumber}#{visitsNumber}#{clicksNumber}#{createTime}#{updateTime}#{displayOption}#{diversion})
+    </insert>
+
+    <insert id="insertBatch" keyProperty="id" useGeneratedKeys="true">
+        insert into dm_center(user_nameregionpixellinkdomainsecondary_domainserial_numbervisits_numberclicks_numbercreate_timeupdate_timedisplay_optiondiversion)
+        values
+        <foreach collection="entities" item="entity" separator=",">
+        (#{entity.userName}#{entity.region}#{entity.pixel}#{entity.link}#{entity.domain}#{entity.secondaryDomain}#{entity.serialNumber}#{entity.visitsNumber}#{entity.clicksNumber}#{entity.createTime}#{entity.updateTime}#{entity.displayOption}#{entity.diversion})
+        </foreach>
+    </insert>
+
+    <insert id="insertOrUpdateBatch" keyProperty="id" useGeneratedKeys="true">
+        insert into dm_center(user_nameregionpixellinkdomainsecondary_domainserial_numbervisits_numberclicks_numbercreate_timeupdate_timedisplay_optiondiversion)
+        values
+        <foreach collection="entities" item="entity" separator=",">
+            (#{entity.userName}#{entity.region}#{entity.pixel}#{entity.link}#{entity.domain}#{entity.secondaryDomain}#{entity.serialNumber}#{entity.visitsNumber}#{entity.clicksNumber}#{entity.createTime}#{entity.updateTime}#{entity.displayOption}#{entity.diversion})
+        </foreach>
+        on duplicate key update
+user_name = values(user_name)region = values(region)pixel = values(pixel)link = values(link)domain = values(domain)secondary_domain = values(secondary_domain)serial_number = values(serial_number)visits_number = values(visits_number)clicks_number = values(clicks_number)create_time = values(create_time)update_time = values(update_time)display_option = values(display_option)diversion = values(diversion)
+    </insert>
+
+    <!--通过主键修改数据-->
+    <update id="update">
+        update dm_center
+        <set>
+            <if test="userName != null and userName != ''">
+                user_name = #{userName},
+            </if>
+            <if test="region != null and region != ''">
+                region = #{region},
+            </if>
+            <if test="pixel != null and pixel != ''">
+                pixel = #{pixel},
+            </if>
+            <if test="link != null and link != ''">
+                link = #{link},
+            </if>
+            <if test="domain != null and domain != ''">
+                domain = #{domain},
+            </if>
+            <if test="secondaryDomain != null and secondaryDomain != ''">
+                secondary_domain = #{secondaryDomain},
+            </if>
+            <if test="serialNumber != null and serialNumber != ''">
+                serial_number = #{serialNumber},
+            </if>
+            <if test="visitsNumber != null">
+                visits_number = #{visitsNumber},
+            </if>
+            <if test="clicksNumber != null">
+                clicks_number = #{clicksNumber},
+            </if>
+            <if test="createTime != null">
+                create_time = #{createTime},
+            </if>
+            <if test="updateTime != null">
+                update_time = #{updateTime},
+            </if>
+            <if test="displayOption != null">
+                display_option = #{displayOption},
+            </if>
+            <if test="diversion != null">
+                diversion = #{diversion},
+            </if>
+            <if test="trolls != null">
+                 trolls = #{trolls}
+            </if>
+        </set>
+        where id = #{id}
+    </update>
+
+    <!--通过主键删除-->
+    <delete id="deleteById">
+        delete from dm_center where id = #{id}
+    </delete>
+
+</mapper>
+

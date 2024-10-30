@@ -1,0 +1,25 @@
+server:
+  port: 3031
+  tomcat:
+    accept-count: 200
+    threads:
+      max: 800
+    connection-timeout: 20000
+spring:
+  redis:
+    host: 127.0.0.1
+    port: 6379
+    database: 0
+  datasource:
+    url: jdbc:mysql://127.0.0.1:3306/table_test
+    username: link
+    password: 123456
+    driver-class-name: com.mysql.jdbc.Driver
+logging:
+  level:
+    cn.itcast: debug
+  pattern:
+    dateformat: MM-dd HH:mm:ss:SSS
+geolite2:
+  file:
+    name: GeoLite2-Country.mmdb
