@@ -10,9 +10,11 @@ import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.impl.client.HttpClients;
 import org.apache.http.util.EntityUtils;
+import org.elasticsearch.common.inject.internal.Stopwatch;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.springframework.stereotype.Service;
+import org.springframework.util.StopWatch;
 import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
 
@@ -171,7 +173,11 @@ public class DmConditionServiceImpl implements DmConditionService {
         RestTemplate restTemplate = new RestTemplate();
             try {
                 // 通过 proxycheck.io API 查询代理/VPN 信息
+                StopWatch stopWatch = new StopWatch();
+                stopWatch.start("延迟1:");
                 String response = restTemplate.getForObject(url, String.class);
+                stopWatch.stop();
+                log.info("延迟1{}",stopWatch.getTotalTimeSeconds());
                 JSONObject jsonResponse = new JSONObject(response);
                 log.info(jsonResponse.toString());
                 JSONObject ipData = jsonResponse.getJSONObject(ip);
@@ -201,21 +207,36 @@ public class DmConditionServiceImpl implements DmConditionService {
 
     @Override
     public Integer getIpApiVpn(List<String> conuntryList, String keyString, String ip) {
+        StopWatch stopWatch = new StopWatch();
+        stopWatch.start("演示1");
         AtomicInteger conde = new AtomicInteger();
-        String url = "https://pro.ip-api.com/json/" + ip + "?key=" + keyString + "&fields=status,countryCode,proxy,hosting,query";
+        String url = "https://pro.ip-api.com/json/" + ip + "?key=" + keyString + "&fields=status,isp,country,proxy,hosting,query";
         RestTemplate restTemplate = new RestTemplate();
+        stopWatch.stop();
+        log.info("演示1:{}",stopWatch.getTotalTimeSeconds());
         try {
+//            stopWatch.start("演示2");
             String response = restTemplate.getForObject(url, String.class);
+//            stopWatch.stop();
+//            log.info("演示2:{}",stopWatch.getTotalTimeSeconds());
             JSONObject jsonResponse = new JSONObject(response);
             log.info(jsonResponse.toString());
-            String proxyStatus = jsonResponse.getString("proxy");
-            String hosting = jsonResponse.getString("hosting");
-            String countryCode = jsonResponse.getString("countryCode");
-            if("true".equals(proxyStatus) || "true".equals(hosting) ||conuntryList.contains(countryCode) ){
+            // 使用 getBoolean 方法来获取布尔值
+            stopWatch.start("演示3");
+            boolean proxyStatus = jsonResponse.getBoolean("proxy");
+            boolean hosting = jsonResponse.getBoolean("hosting");
+            String countryCode = jsonResponse.getString("country");
+            String ips = jsonResponse.getString("isp");
+            List<String> typeList = Arrays.asList(
+                    "VOCOM International Telecommunication, INC.","Cogent Communications","Google LLC"
+            );
+            if (proxyStatus || hosting ||typeList.contains(ips) || conuntryList.contains(countryCode)) {
                 conde.set(1);
-            }else {
+            } else {
                 conde.set(0);
             }
+            stopWatch.stop();
+            log.info("演示3:{}",stopWatch.getTotalTimeSeconds());
         } catch (RestClientException e) {
             log.error("Exception occurred: " + e.getMessage());
             conde.set(0);

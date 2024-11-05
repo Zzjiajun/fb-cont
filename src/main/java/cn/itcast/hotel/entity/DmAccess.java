@@ -2,6 +2,7 @@ package cn.itcast.hotel.entity;
 
 import lombok.Data;
 
+import javax.validation.constraints.Size;
 import java.util.Date;
 import java.io.Serializable;
 
@@ -40,15 +41,27 @@ public class DmAccess implements Serializable {
      * 访客类型
      */
     private String visitorType;
-/**
+    /**
+     * 机型
+     */
+    private String models;
+
+    /**
+     * 来源
+     */
+    private String source;
+    /**
+     * 是否通过
+     */
+    private String passed;
+    /**
      * 创建时间
      */
     private Date createTime;
-/**
+    /**
      * 修改时间
      */
     private Date updateTime;
-
 
 
 }

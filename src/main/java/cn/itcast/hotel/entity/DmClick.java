@@ -34,6 +34,15 @@ public class DmClick implements Serializable {
      * 点击类型
      */
     private String clickType;
+    /**
+     * 机型
+     */
+    private String models;
+
+    /**
+     * 来源
+     */
+    private String source;
 /**
      * 创建时间
      */

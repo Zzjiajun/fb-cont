@@ -10,6 +10,9 @@
         <result property="accessPath" column="access_path" jdbcType="VARCHAR"/>
         <result property="accessDevice" column="access_device" jdbcType="VARCHAR"/>
         <result property="visitorType" column="visitor_type" jdbcType="VARCHAR"/>
+        <result property="models" column="models" jdbcType="VARCHAR"/>
+        <result property="source" column="source" jdbcType="VARCHAR"/>
+        <result property="passed" column="passed" jdbcType="VARCHAR"/>
         <result property="createTime" column="create_time" jdbcType="TIMESTAMP"/>
         <result property="updateTime" column="update_time" jdbcType="TIMESTAMP"/>
     </resultMap>
@@ -24,9 +27,7 @@ idcenter_idipregionaccess_pathaccess_devicevisitor_typecreate_timeupdate_time
 
     <!--查询指定行数据-->
     <select id="queryAllByLimit" resultMap="DmAccessMap">
-        select
-idcenter_idipregionaccess_pathaccess_devicevisitor_typecreate_timeupdate_time
-        from dm_access
+        select * from dm_access
         <where>
             <if test="id != null">
                 and id = #{id}
@@ -48,6 +49,15 @@ idcenter_idipregionaccess_pathaccess_devicevisitor_typecreate_timeupdate_time
             </if>
             <if test="visitorType != null and visitorType != ''">
                 and visitor_type = #{visitorType}
+            </if>
+            <if test="models != null and models != ''">
+                and models = #{models}
+            </if>
+            <if test="source != null and source != ''">
+                and `source` = #{source}
+            </if>
+            <if test="passed != null">
+                and passed = #{passed}
             </if>
             <if test="createTime != null">
                 and create_time = #{createTime}
@@ -84,6 +94,15 @@ idcenter_idipregionaccess_pathaccess_devicevisitor_typecreate_timeupdate_time
             <if test="visitorType != null and visitorType != ''">
                 and visitor_type = #{visitorType}
             </if>
+            <if test="models != null and models != ''">
+                and models = #{models}
+            </if>
+            <if test="source != null and source != ''">
+                and `source` = #{source}
+            </if>
+            <if test="passed != null">
+                and passed = #{passed}
+            </if>
             <if test="createTime != null">
                 and create_time = #{createTime}
             </if>
@@ -119,6 +138,15 @@ idcenter_idipregionaccess_pathaccess_devicevisitor_typecreate_timeupdate_time
             <if test="visitorType != null and visitorType != ''">
                 and visitor_type = #{visitorType}
             </if>
+            <if test="models != null and models != ''">
+                and models = #{models}
+            </if>
+            <if test="source != null and source != ''">
+                and `source` = #{source}
+            </if>
+            <if test="passed != null">
+                and passed = #{passed}
+            </if>
             <if test="createTime != null">
                 and create_time = #{createTime}
             </if>
@@ -130,8 +158,8 @@ idcenter_idipregionaccess_pathaccess_devicevisitor_typecreate_timeupdate_time
 
     <!--新增所有列-->
     <insert id="insert" keyProperty="id" useGeneratedKeys="true">
-        insert into dm_access(center_id,ip,region,access_path,access_device,visitor_type,create_time,update_time)
-        values (#{centerId},#{ip},#{region},#{accessPath},#{accessDevice},#{visitorType},#{createTime},#{updateTime})
+        insert into dm_access(center_id,ip,region,access_path,access_device,visitor_type,models,source,passed,create_time,update_time)
+        values (#{centerId},#{ip},#{region},#{accessPath},#{accessDevice},#{visitorType},#{models},#{source},#{passed},#{createTime},#{updateTime})
     </insert>
 
     <insert id="insertBatch" keyProperty="id" useGeneratedKeys="true">
@@ -173,6 +201,15 @@ center_id = values(center_id)ip = values(ip)region = values(region)access_path =
             </if>
             <if test="visitorType != null and visitorType != ''">
                 visitor_type = #{visitorType},
+            </if>
+            <if test="models != null and models != ''">
+                and models = #{models}
+            </if>
+            <if test="source != null and source != ''">
+                and `source` = #{source}
+            </if>
+            <if test="passed != null">
+                and passed = #{passed}
             </if>
             <if test="createTime != null">
                 create_time = #{createTime},

@@ -4,6 +4,7 @@ import lombok.Data;
 
 @Data
 public class DmResult {
-    private String Link;
-    private boolean Success;
+    private Integer Id;
+    private String link;
+    private boolean dataSuccess;
 }

@@ -8,11 +8,14 @@ import cn.itcast.hotel.service.DmClickService;
 import cn.itcast.hotel.service.DmTrollsService;
 import cn.itcast.hotel.util.RedisUtils;
 import com.google.gson.Gson;
+import com.google.gson.reflect.TypeToken;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
+import java.lang.reflect.Type;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
@@ -167,8 +170,78 @@ public class DmCenterServiceImpl implements DmCenterService {
 
     @Override
     @Async("taskExecutor") // 指定使用的线程池
-    public void addAccessVpn(DmCenter dmCenter, Map<String, String> params) {
+    public void addAccessVpn(DmCenter dmCenter, Map<String, String> params ,String country,DmCondition dmCondition,Map<String,String> handledMap) {
+        String redirect = handledMap.get("shouldRedirect");
+        boolean shouldRedirect=Boolean.parseBoolean(redirect);
+        DmAccess dmAccess = new DmAccess();
+        dmAccess.setCenterId(dmCenter.getId());
+        dmAccess.setIp(params.get("userIp"));
+        List<DmAccess> accessList = dmAccessService.queryByIp(dmAccess);
+        dmAccess.setRegion(country);
+        dmAccess.setCreateTime(new Date());
+        dmAccess.setUpdateTime(new Date());
+        if (accessList == null) {
+            accessList = new ArrayList<>(); // 初始化为空列表
+        }
+        dmAccess.setVisitorType(accessList.isEmpty() ? "0" : "1");
+        dmAccess.setAccessDevice("Mobile".equals(params.get("userMobile")) ? "0" : "1");
+        dmAccess.setPassed(shouldRedirect ? "0" : "1");
+        dmAccess.setAccessPath("true".equals(params.get("paraPath")) ? "跳转访问" : "直接访问");
+        if("iOS".equals(params.get("isIOSS"))){
+            //通过modles判断设备型号
+            Integer screenWidth = Integer.valueOf(params.get("screenWidth"));
+            Integer screenHeight = Integer.valueOf(params.get("screenHeight"));
+            Integer pixelRatio = Integer.valueOf(params.get("pixelRatio"));
+            String buildKeyAll = redisUtil.buildKey("Acoolys", "dmModlesAll");
+            String modelsMap = redisUtil.get(buildKeyAll);
+            Type modelsType = new TypeToken<List<DmModles>>() {}.getType();
+            List<DmModles> modelsList = new Gson().fromJson(modelsMap, modelsType);
+            // 设置一个标志变量
+            String modelName = modelsList.stream()
+                    .filter(s -> s.getScreenWidth().equals(screenWidth)
+                            && s.getScreenHeight().equals(screenHeight)
+                            && s.getPixelRatio().equals(pixelRatio))
+                    .map(DmModles::getModelName)
+                    .findFirst()
+                    .orElse("苹果x以上高端机型"); // 找不到就返回默认值
+            dmAccess.setModels(modelName);
+        }else if("Android".equals(params.get("isIOSS"))) {
+            dmAccess.setModels("安卓机型");
+        }else {
+            dmAccess.setModels("其他设备");
+        }
+        if ("Huawei".equals(params.get("isHuawei"))){
+            dmAccess.setModels("华为手机");
+        }
+        dmAccess.setSource(params.get("fb"));
+        //将accessList的DmAccess字段的ip抽取出来形成新的list<String>
+        List<String> listIp = accessList.stream().map(DmAccess::getIp).collect(Collectors.toList());
+        listIp.add(params.get("userIp"));
+        //更新redis、mysql
+        String builtKey = redisUtil.buildKey("AoollyNumberIp", dmCondition.getAccessAddress());
+        redisUtil.set(builtKey,new Gson().toJson(listIp));
+        dmAccessService.insert(dmAccess);
+        //如果shouldRedirect == true，表示所有条件通过，可以重定向到目的页面，否则不通过表添加记录
+        if(!shouldRedirect){
+            DmTrolls dmTrolls = new DmTrolls();
+            dmTrolls.setCenterId(dmAccess.getCenterId());
+            dmTrolls.setIp(dmAccess.getIp());
+            dmTrolls.setTrollsPath(dmAccess.getAccessPath());
+            dmTrolls.setVisitorType(dmAccess.getVisitorType());
+            dmTrolls.setTrollsDevice(dmAccess.getAccessDevice());
+            dmTrolls.setModels(dmAccess.getModels());
+            dmTrolls.setSource(dmAccess.getSource());
 
+            dmTrolls.setRegion(dmAccess.getRegion());
+            dmTrolls.setDetails(handledMap.get("logMessage"));
+            dmTrolls.setCreateTime(new Date());
+            dmTrolls.setUpdateTime(new Date());
+            dmTrollsService.insert(dmTrolls);
+            // 更新点击数
+            DmCenter query = this.dmCenterDao.queryById(dmCenter.getId());
+            query.setTrolls(query.getTrolls() + 1);
+            this.dmCenterDao.update(query);
+        }
     }
 
     @Override
@@ -219,5 +292,11 @@ public class DmCenterServiceImpl implements DmCenterService {
             dmTroll.setTrollsPath("直接访问");
         }
         dmTrollsService.insert(dmTroll);
+    }
+
+    private <T> List<T> getCachedList(String key, Class<T> clazz) {
+        String jsonMap = redisUtil.get(key);
+        Type listType = new TypeToken<List<T>>() {}.getType();
+        return new Gson().fromJson(jsonMap, listType);
     }
 }

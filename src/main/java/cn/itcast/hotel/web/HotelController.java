@@ -27,6 +27,7 @@ import java.io.InputStreamReader;
 import java.lang.reflect.Type;
 import java.net.*;
 import java.util.*;
+import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -811,4 +812,84 @@ public class HotelController {
             return null;
         }
     }
+
+//    @PostMapping("/getVpnNumber")
+//    public Result<DmResult> getVpnNumber(@RequestBody Map<String, String> params) throws Exception {
+//        Result<DmResult> result = new Result<>();
+//        DmResult dmResult = new DmResult();
+//        HashMap<String, String> handledMap = new HashMap<>();
+//        CompletableFuture<DmCenter> queryFuture;
+//        CompletableFuture<DmCondition> conditionFuture;
+//        CompletableFuture<String> countryFuture;
+//        CompletableFuture<Integer> vpnCodeFuture;
+//        CompletableFuture<Boolean> ipLimitFuture;
+//
+//        try {
+//            String domainName = params.getOrDefault("domainName", "defaultDomain").substring(0, params.get("domainName").length() - 1);
+//            String ip = params.get("userIp");
+//
+//            // 异步获取国家信息
+//            countryFuture = CompletableFuture.supplyAsync(() -> getCountrySetByIp(ip));
+//
+//            // 异步从 Redis 获取 DmCenter 数据
+//            queryFuture = CompletableFuture.supplyAsync(() -> {
+//                String dmCenterKey = redisUtil.buildKey("acooly", "dmCenterMap");
+//                String jsonMap = redisUtil.get(dmCenterKey);
+//                Type mapType = new TypeToken<Map<String, DmCenter>>() {}.getType();
+//                Map<String, DmCenter> map = new Gson().fromJson(jsonMap, mapType);
+//                return map.get(domainName);
+//            });
+//
+//            // 异步从 Redis 获取 DmCondition 数据
+//            conditionFuture = CompletableFuture.supplyAsync(() -> {
+//                String dmConditionKey = redisUtil.buildKey("acooly", "dmConditionList");
+//                String conMap = redisUtil.get(dmConditionKey);
+//                Type mapCon = new TypeToken<Map<String, DmCondition>>() {}.getType();
+//                Map<String, DmCondition> mapCondition = new Gson().fromJson(conMap, mapCon);
+//                return mapCondition.get(domainName);
+//            });
+//
+//            // 异步设置 VPN Code（如果需要）
+//            vpnCodeFuture = conditionFuture.thenApplyAsync(dmCondition -> {
+//                return dmCondition.getIsVpn() == 1 ? getVpnSetCode(dmCondition, ip) : 0;
+//            });
+//
+//            // 异步判断是否在白名单中并清除标志或设置 IP 限制条件
+//            ipLimitFuture = conditionFuture.thenCombineAsync(vpnCodeFuture, (dmCondition, vpnCode) -> {
+//                dmCondition.setVpnCode(vpnCode);
+//                if (isInWhiteList(dmCondition, ip)) {
+//                    clearConditionFlags(dmCondition);
+//                    return true;
+//                } else {
+//                    handleIpLimitConditions(dmCondition, ip);
+//                    return false;
+//                }
+//            });
+//
+//            // 等待所有异步任务完成
+//            CompletableFuture.allOf(queryFuture, conditionFuture, countryFuture, ipLimitFuture).join();
+//
+//            // 处理移动设备条件
+//            handledMap = handleMobileConditions(conditionFuture.join(), params, countryFuture.join());
+//            Boolean shouldRedirect = Boolean.parseBoolean(handledMap.get("shouldRedirect"));
+//
+//            // 设置结果
+//            dmResult.setDataSuccess(shouldRedirect);
+//            result.setData(dmResult);
+//            result.setSuccess(true);
+//
+//        } catch (Exception e) {
+//            result.setSuccess(false);
+//            log.error("Error processing request: ", e);
+//        }
+//
+//        // 更新主数据的点击数及添加 VPN 访问日志，保持异步
+//        CompletableFuture.runAsync(() -> {
+//            dmCenterService.update(queryFuture.join());
+//            dmCenterService.addAccessVpn(queryFuture.join(), params, countryFuture.join(), conditionFuture.join(), handledMap);
+//            log.info("成功还是失败：" + dmResult.toString());
+//        });
+//
+//        return result;
+//    }
 }

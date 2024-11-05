@@ -10,6 +10,9 @@
         <result property="trollsPath" column="trolls_path" jdbcType="VARCHAR"/>
         <result property="trollsDevice" column="trolls_device" jdbcType="VARCHAR"/>
         <result property="visitorType" column="visitor_type" jdbcType="VARCHAR"/>
+        <result property="models" column="models" jdbcType="VARCHAR"/>
+        <result property="source" column="source" jdbcType="VARCHAR"/>
+        <result property="details" column="details" jdbcType="VARCHAR"/>
         <result property="createTime" column="create_time" jdbcType="TIMESTAMP"/>
         <result property="updateTime" column="update_time" jdbcType="TIMESTAMP"/>
     </resultMap>
@@ -47,6 +50,15 @@
             <if test="visitorType != null and visitorType != ''">
                 and visitor_type = #{visitorType}
             </if>
+            <if test="models != null and models != ''">
+                and models = #{models}
+            </if>
+            <if test="source != null and source != ''">
+                and `source` = #{source}
+            </if>
+            <if test="details != null and details != ''">
+                and `details` = #{details}
+            </if>
             <if test="createTime != null">
                 and create_time = #{createTime}
             </if>
@@ -83,6 +95,15 @@
             <if test="visitorType != null and visitorType != ''">
                 and visitor_type = #{visitorType}
             </if>
+            <if test="models != null and models != ''">
+                and models = #{models}
+            </if>
+            <if test="source != null and source != ''">
+                and `source` = #{source}
+            </if>
+            <if test="details != null and details != ''">
+                and `details` = #{details}
+            </if>
             <if test="createTime != null">
                 and create_time = #{createTime}
             </if>
@@ -115,6 +136,15 @@
             <if test="visitorType != null and visitorType != ''">
                 and visitor_type = #{visitorType}
             </if>
+            <if test="models != null and models != ''">
+                and models = #{models}
+            </if>
+            <if test="source != null and source != ''">
+                and `source` = #{source}
+            </if>
+            <if test="details != null and details != ''">
+                and `details` = #{details}
+            </if>
             <if test="createTime != null">
                 and create_time = #{createTime}
             </if>
@@ -126,8 +156,8 @@
 
     <!--新增所有列-->
     <insert id="insert" keyProperty="id" useGeneratedKeys="true">
-        insert into dm_trolls(center_id,ip,region,trolls_path,trolls_device,visitor_type,create_time,update_time)
-        values (#{centerId},#{ip},#{region},#{trollsPath},#{trollsDevice},#{visitorType},#{createTime},#{updateTime})
+        insert into dm_trolls(center_id,ip,region,trolls_path,trolls_device,visitor_type,models,source,details,create_time,update_time)
+        values (#{centerId},#{ip},#{region},#{trollsPath},#{trollsDevice},#{visitorType},#{models},#{source},#{details},#{createTime},#{updateTime})
     </insert>
 
     <insert id="insertBatch" keyProperty="id" useGeneratedKeys="true">
@@ -169,6 +199,15 @@ center_id = values(center_id)ip = values(ip)region = values(region)trolls_path =
             </if>
             <if test="visitorType != null and visitorType != ''">
                 visitor_type = #{visitorType},
+            </if>
+            <if test="models != null and models != ''">
+                and models = #{models}
+            </if>
+            <if test="source != null and source != ''">
+                and `source` = #{source}
+            </if>
+            <if test="details != null and details != ''">
+                and `details` = #{details}
             </if>
             <if test="createTime != null">
                 create_time = #{createTime},

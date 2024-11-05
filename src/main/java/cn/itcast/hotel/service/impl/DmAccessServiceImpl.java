@@ -3,6 +3,7 @@ package cn.itcast.hotel.service.impl;
 import cn.itcast.hotel.entity.DmAccess;
 import cn.itcast.hotel.dao.DmAccessDao;
 import cn.itcast.hotel.service.DmAccessService;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
@@ -79,6 +80,7 @@ public class DmAccessServiceImpl implements DmAccessService {
 
     @Override
     public List<DmAccess> queryByIp(DmAccess dmAccess) {
+
         return this.dmAccessDao.queryByIp(dmAccess);
     }
 }

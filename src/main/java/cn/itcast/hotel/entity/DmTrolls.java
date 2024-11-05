@@ -1,5 +1,7 @@
 package cn.itcast.hotel.entity;
 
+import lombok.Data;
+
 import java.util.Date;
 import java.io.Serializable;
 
@@ -9,6 +11,7 @@ import java.io.Serializable;
  * @author makejava
  * @since 2024-09-26 02:48:12
  */
+@Data
 public class DmTrolls implements Serializable {
     private static final long serialVersionUID = -18228857997724671L;
 
@@ -37,87 +40,28 @@ public class DmTrolls implements Serializable {
      * 访客类型
      */
     private String visitorType;
-/**
+    /**
+     * 机型
+     */
+    private String models;
+
+    /**
+     * 来源
+     */
+    private String source;
+    /**
+     * 失败明细
+     */
+    private String details;
+    /**
      * 创建时间
      */
     private Date createTime;
-/**
+    /**
      * 修改时间
      */
     private Date updateTime;
 
-
-    public Integer getId() {
-        return id;
-    }
-
-    public void setId(Integer id) {
-        this.id = id;
-    }
-
-    public Integer getCenterId() {
-        return centerId;
-    }
-
-    public void setCenterId(Integer centerId) {
-        this.centerId = centerId;
-    }
-
-    public String getIp() {
-        return ip;
-    }
-
-    public void setIp(String ip) {
-        this.ip = ip;
-    }
-
-    public String getRegion() {
-        return region;
-    }
-
-    public void setRegion(String region) {
-        this.region = region;
-    }
-
-    public String getTrollsPath() {
-        return trollsPath;
-    }
-
-    public void setTrollsPath(String trollsPath) {
-        this.trollsPath = trollsPath;
-    }
-
-    public String getTrollsDevice() {
-        return trollsDevice;
-    }
-
-    public void setTrollsDevice(String trollsDevice) {
-        this.trollsDevice = trollsDevice;
-    }
-
-    public String getVisitorType() {
-        return visitorType;
-    }
-
-    public void setVisitorType(String visitorType) {
-        this.visitorType = visitorType;
-    }
-
-    public Date getCreateTime() {
-        return createTime;
-    }
-
-    public void setCreateTime(Date createTime) {
-        this.createTime = createTime;
-    }
-
-    public Date getUpdateTime() {
-        return updateTime;
-    }
-
-    public void setUpdateTime(Date updateTime) {
-        this.updateTime = updateTime;
-    }
 
 }
 

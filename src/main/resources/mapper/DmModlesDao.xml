@@ -1,0 +1,152 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="cn.itcast.hotel.dao.DmModlesDao">
+
+    <resultMap type="cn.itcast.hotel.entity.DmModles" id="DmModlesMap">
+        <result property="id" column="id" jdbcType="INTEGER"/>
+        <result property="modelName" column="model_name" jdbcType="VARCHAR"/>
+        <result property="screenWidth" column="screen_width" jdbcType="INTEGER"/>
+        <result property="screenHeight" column="screen_height" jdbcType="INTEGER"/>
+        <result property="pixelRatio" column="pixel_ratio" jdbcType="INTEGER"/>
+        <result property="isDelete" column="is_delete" jdbcType="INTEGER"/>
+        <result property="createTime" column="create_time" jdbcType="TIMESTAMP"/>
+        <result property="updateTime" column="update_time" jdbcType="TIMESTAMP"/>
+    </resultMap>
+
+    <!--查询单个-->
+    <select id="queryById" resultMap="DmModlesMap">
+        select
+            *
+        from dm_modles
+        where id = #{id}
+    </select>
+
+    <!--查询指定行数据-->
+    <select id="queryAllByLimit" resultMap="DmModlesMap">
+        select
+        *
+        from dm_modles
+        <where>
+            <if test="id != null">
+                and id = #{id}
+            </if>
+            <if test="modelName != null and modelName != ''">
+                and model_name = #{modelName}
+            </if>
+            <if test="screenWidth != null">
+                and screen_width = #{screenWidth}
+            </if>
+            <if test="screenHeight != null">
+                and screen_height = #{screenHeight}
+            </if>
+            <if test="pixelRatio != null">
+                and pixel_ratio = #{pixelRatio}
+            </if>
+            <if test="isDelete != null">
+                and is_delete = #{isDelete}
+            </if>
+            <if test="createTime != null">
+                and create_time = #{createTime}
+            </if>
+            <if test="updateTime != null">
+                and update_time = #{updateTime}
+            </if>
+        </where>
+        limit #{pageable.offset}, #{pageable.pageSize}
+    </select>
+
+    <!--统计总行数-->
+    <select id="count" resultType="java.lang.Long">
+        select count(1)
+        from dm_modles
+        <where>
+            <if test="id != null">
+                and id = #{id}
+            </if>
+            <if test="modelName != null and modelName != ''">
+                and model_name = #{modelName}
+            </if>
+            <if test="screenWidth != null">
+                and screen_width = #{screenWidth}
+            </if>
+            <if test="screenHeight != null">
+                and screen_height = #{screenHeight}
+            </if>
+            <if test="pixelRatio != null">
+                and pixel_ratio = #{pixelRatio}
+            </if>
+            <if test="isDelete != null">
+                and is_delete = #{isDelete}
+            </if>
+            <if test="createTime != null">
+                and create_time = #{createTime}
+            </if>
+            <if test="updateTime != null">
+                and update_time = #{updateTime}
+            </if>
+        </where>
+    </select>
+    <select id="getAll" resultMap="DmModlesMap">
+        select * from dm_modles
+    </select>
+
+    <!--新增所有列-->
+    <insert id="insert" keyProperty="id" useGeneratedKeys="true">
+        insert into dm_modles(model_name,screen_width,screen_height,pixel_ratio,is_delete,create_time,update_time)
+        values (#{modelName}#{screenWidth}#{screenHeight}#{pixelRatio}#{isDelete}#{createTime}#{updateTime})
+    </insert>
+
+    <insert id="insertBatch" keyProperty="id" useGeneratedKeys="true">
+        insert into dm_modles(model_namescreen_widthscreen_heightpixel_ratiois_deletecreate_timeupdate_time)
+        values
+        <foreach collection="entities" item="entity" separator=",">
+        (#{entity.modelName}#{entity.screenWidth}#{entity.screenHeight}#{entity.pixelRatio}#{entity.isDelete}#{entity.createTime}#{entity.updateTime})
+        </foreach>
+    </insert>
+
+    <insert id="insertOrUpdateBatch" keyProperty="id" useGeneratedKeys="true">
+        insert into dm_modles(model_namescreen_widthscreen_heightpixel_ratiois_deletecreate_timeupdate_time)
+        values
+        <foreach collection="entities" item="entity" separator=",">
+            (#{entity.modelName}#{entity.screenWidth}#{entity.screenHeight}#{entity.pixelRatio}#{entity.isDelete}#{entity.createTime}#{entity.updateTime})
+        </foreach>
+        on duplicate key update
+model_name = values(model_name)screen_width = values(screen_width)screen_height = values(screen_height)pixel_ratio = values(pixel_ratio)is_delete = values(is_delete)create_time = values(create_time)update_time = values(update_time)
+    </insert>
+
+    <!--通过主键修改数据-->
+    <update id="update">
+        update dm_modles
+        <set>
+            <if test="modelName != null and modelName != ''">
+                model_name = #{modelName},
+            </if>
+            <if test="screenWidth != null">
+                screen_width = #{screenWidth},
+            </if>
+            <if test="screenHeight != null">
+                screen_height = #{screenHeight},
+            </if>
+            <if test="pixelRatio != null">
+                pixel_ratio = #{pixelRatio},
+            </if>
+            <if test="isDelete != null">
+                is_delete = #{isDelete},
+            </if>
+            <if test="createTime != null">
+                create_time = #{createTime},
+            </if>
+            <if test="updateTime != null">
+                update_time = #{updateTime},
+            </if>
+        </set>
+        where id = #{id}
+    </update>
+
+    <!--通过主键删除-->
+    <delete id="deleteById">
+        delete from dm_modles where id = #{id}
+    </delete>
+
+</mapper>
+

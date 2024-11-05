@@ -1,5 +1,6 @@
 package cn.itcast.hotel.service;
 
+import cn.itcast.hotel.entity.DmAccess;
 import cn.itcast.hotel.entity.DmCenter;
 import cn.itcast.hotel.entity.DmCondition;
 import org.springframework.scheduling.annotation.Async;
@@ -41,7 +42,6 @@ public interface DmCenterService {
      * @param dmCenter 实例对象
      * @return 实例对象
      */
-
     void update(DmCenter dmCenter);
 
     @Async("taskExecutor") // 指定使用的线程池
@@ -63,9 +63,8 @@ public interface DmCenterService {
     boolean deleteById(Integer id);
 
     void addAccess(DmCenter dmCenter , String ip, DmCondition dmCondition,String country,String userMobile,String paraPath);
+    void addAccessVpn(DmCenter dmCenter, Map<String, String> params,String country,DmCondition dmCondition,Map<String,String> handledMap);
 
-
-    void addAccessVpn(DmCenter dmCenter, Map<String, String> params);
 
     void addClickCount(DmCenter dmCenter , String ip,String country,String userMobile);
 

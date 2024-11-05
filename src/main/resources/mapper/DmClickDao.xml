@@ -9,6 +9,8 @@
         <result property="region" column="region" jdbcType="VARCHAR"/>
         <result property="clickDevice" column="click_device" jdbcType="VARCHAR"/>
         <result property="clickType" column="click_type" jdbcType="VARCHAR"/>
+        <result property="models" column="models" jdbcType="VARCHAR"/>
+        <result property="source" column="source" jdbcType="VARCHAR"/>
         <result property="createTime" column="create_time" jdbcType="TIMESTAMP"/>
         <result property="updateTime" column="update_time" jdbcType="TIMESTAMP"/>
     </resultMap>
@@ -23,8 +25,7 @@ idcenter_idipregionclick_deviceclick_typecreate_timeupdate_time
 
     <!--查询指定行数据-->
     <select id="queryAllByLimit" resultMap="DmClickMap">
-        select
-idcenter_idipregionclick_deviceclick_typecreate_timeupdate_time
+        select *
         from dm_click
         <where>
             <if test="id != null">
@@ -44,6 +45,12 @@ idcenter_idipregionclick_deviceclick_typecreate_timeupdate_time
             </if>
             <if test="clickType != null and clickType != ''">
                 and click_type = #{clickType}
+            </if>
+            <if test="models != null and models != ''">
+                and models = #{models}
+            </if>
+            <if test="source != null and source != ''">
+                and `source` = #{source}
             </if>
             <if test="createTime != null">
                 and create_time = #{createTime}
@@ -75,6 +82,12 @@ idcenter_idipregionclick_deviceclick_typecreate_timeupdate_time
             </if>
             <if test="clickType != null and clickType != ''">
                 and click_type = #{clickType}
+            </if>
+            <if test="models != null and models != ''">
+                and models = #{models}
+            </if>
+            <if test="source != null and source != ''">
+                and `source` = #{source}
             </if>
             <if test="createTime != null">
                 and create_time = #{createTime}
@@ -108,6 +121,12 @@ idcenter_idipregionclick_deviceclick_typecreate_timeupdate_time
             <if test="clickType != null and clickType != ''">
                 and click_type = #{clickType}
             </if>
+            <if test="models != null and models != ''">
+                and models = #{models}
+            </if>
+            <if test="source != null and source != ''">
+                and `source` = #{source}
+            </if>
             <if test="createTime != null">
                 and create_time = #{createTime}
             </if>
@@ -119,8 +138,8 @@ idcenter_idipregionclick_deviceclick_typecreate_timeupdate_time
 
     <!--新增所有列-->
     <insert id="insert" keyProperty="id" useGeneratedKeys="true">
-        insert into dm_click(center_id,ip,region,click_device,click_type,create_time,update_time)
-        values (#{centerId},#{ip},#{region},#{clickDevice},#{clickType},#{createTime},#{updateTime})
+        insert into dm_click(center_id,ip,region,click_device,click_type,models,source,create_time,update_time)
+        values (#{centerId},#{ip},#{region},#{clickDevice},#{clickType},#{models},#{source},#{createTime},#{updateTime})
     </insert>
 
     <insert id="insertBatch" keyProperty="id" useGeneratedKeys="true">
@@ -159,6 +178,12 @@ center_id = values(center_id)ip = values(ip)region = values(region)click_device 
             </if>
             <if test="clickType != null and clickType != ''">
                 click_type = #{clickType},
+            </if>
+            <if test="models != null and models != ''">
+                and models = #{models}
+            </if>
+            <if test="source != null and source != ''">
+                and `source` = #{source}
             </if>
             <if test="createTime != null">
                 create_time = #{createTime},
