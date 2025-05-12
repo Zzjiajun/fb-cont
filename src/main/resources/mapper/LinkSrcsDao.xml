@@ -9,6 +9,8 @@
         <result property="domain" column="domain" jdbcType="VARCHAR"/>
         <result property="createTime" column="create_time" jdbcType="TIMESTAMP"/>
         <result property="updateTime" column="update_time" jdbcType="TIMESTAMP"/>
+        <result property="keyy" column="keyy" jdbcType="VARCHAR"/>
+        <result property="protect" column="protect" jdbcType="INTEGER"/>
     </resultMap>
 
     <!--查询单个-->
@@ -37,6 +39,12 @@ idlink_srcuser_namedomaincreate_timeupdate_time
             <if test="domain != null and domain != ''">
                 and domain = #{domain}
             </if>
+            <if test="keyy != null and keyy != ''">
+                and keyy = #{keyy}
+            </if>
+            <if test="protect != null and protect != ''">
+                and protect = #{protect}
+            </if>
             <if test="createTime != null">
                 and create_time = #{createTime}
             </if>
@@ -64,6 +72,12 @@ idlink_srcuser_namedomaincreate_timeupdate_time
             <if test="domain != null and domain != ''">
                 and domain = #{domain}
             </if>
+            <if test="keyy != null and keyy != ''">
+                and keyy = #{keyy}
+            </if>
+            <if test="protect != null and protect != ''">
+                and protect = #{protect}
+            </if>
             <if test="createTime != null">
                 and create_time = #{createTime}
             </if>
@@ -87,6 +101,12 @@ idlink_srcuser_namedomaincreate_timeupdate_time
             </if>
             <if test="domain != null and domain != ''">
                 and domain = #{domain}
+            </if>
+            <if test="keyy != null and keyy != ''">
+                and keyy = #{keyy}
+            </if>
+            <if test="protect != null and protect != ''">
+                and protect = #{protect}
             </if>
             <if test="createTime != null">
                 and create_time = #{createTime}
@@ -133,6 +153,12 @@ link_src = values(link_src)user_name = values(user_name)domain = values(domain)c
             </if>
             <if test="domain != null and domain != ''">
                 domain = #{domain},
+            </if>
+            <if test="keyy != null and keyy != ''">
+                and keyy = #{keyy}
+            </if>
+            <if test="protect != null and protect != ''">
+                and protect = #{protect}
             </if>
             <if test="createTime != null">
                 create_time = #{createTime},

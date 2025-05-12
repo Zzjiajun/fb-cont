@@ -22,6 +22,11 @@ public class LinkSrcs implements Serializable {
     private String userName;
 
     private String domain;
+
+    private String keyy;
+
+    private Integer protect;
+
 /**
      * 创建时间
      */

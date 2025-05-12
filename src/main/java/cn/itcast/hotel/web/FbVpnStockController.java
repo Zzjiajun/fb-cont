@@ -1,7 +1,9 @@
 package cn.itcast.hotel.web;
 
 import cn.itcast.hotel.entity.*;
+import cn.itcast.hotel.po.DeviceDetectorPo;
 import cn.itcast.hotel.service.*;
+import cn.itcast.hotel.util.Deevvi;
 import cn.itcast.hotel.util.RedisUtils;
 import cn.itcast.hotel.util.Result;
 import com.google.gson.Gson;
@@ -46,7 +48,8 @@ public class FbVpnStockController {
 
     @Resource
     private DmModlesService dmModlesService;
-
+    @Resource
+    private DmPixelService dmPixelService;
     @Resource
     private DmCenterService dmCenterService;
     @Resource
@@ -67,6 +70,7 @@ public class FbVpnStockController {
         if (proxyIpList.contains(ip)) {
             return 1;
         }else {
+//            int vpnCode = dmConditionService.getIpVpn(conuntryList, keyString, ip);
             int vpnCode = dmConditionService.getIpApiVpn(conuntryList, keyString, ip);
             dmCondition.setVpnCode(vpnCode);
             if (vpnCode==1){
@@ -77,110 +81,6 @@ public class FbVpnStockController {
         }
     }
 
-    @PostMapping("/getNumber")
-    public Result<DmResult> getNumber(@RequestBody Map<String, String> params) throws Exception {
-        Result<DmResult> result = new Result<>();
-        DmResult dmResult = new DmResult();
-        String domainName = params.getOrDefault("domainName", "defaultDomain");
-        domainName = domainName.substring(0, domainName.length() - 1);
-        String country = getCountrySetByIp(params.get("userIp"));
-        String ip = params.get("userIp");
-
-        String dmCenterKey = redisUtil.buildKey("acooly", "dmCenterMap");
-        String jsonMap = redisUtil.get(dmCenterKey);
-        Type mapType = new TypeToken<Map<String, DmCenter>>() {}.getType();
-        Map<String, DmCenter> map = new Gson().fromJson(jsonMap, mapType);
-        DmCenter query = map.get(domainName);
-
-        String dmConditionKey = redisUtil.buildKey("acooly", "dmConditionList");
-        String conMap = redisUtil.get(dmConditionKey);
-        Type mapCon = new TypeToken<Map<String, DmCondition>>() {}.getType();
-        Map<String, DmCondition> mapCondition = new Gson().fromJson(conMap, mapCon);
-        DmCondition dmCondition = mapCondition.get(domainName);
-
-        if (dmCondition.getIsVpn() == 1){
-            dmCondition.setVpnCode(getVpnSetCode(dmCondition,ip));
-        } else {
-            dmCondition.setVpnCode(0);
-        }
-
-        if (dmCondition.getIsIp() == 1) {
-            if (country.equals(dmCondition.getIpCountry())) {
-                dmCondition.setIpCountry("true");
-            }
-        }
-        //判断访问手机类型 并且是苹果手机的时候，判断是否是禁用的手机类型
-        if("Mobile".equals(params.get("userMobile")) && "iOS".equals(params.get("isIOSS"))){
-            String buildKey = redisUtil.buildKey("Acoolys", "dmModles");
-            String modelsMap = redisUtil.get(buildKey);
-            Type modelsType = new TypeToken<List<DmModles>>() {}.getType();
-            List<DmModles> modelsList = new Gson().fromJson(modelsMap, modelsType);
-            Integer screenWidth= Integer.valueOf(params.get("screenWidth"));
-            Integer screenHeight= Integer.valueOf(params.get("screenHeight"));
-            Integer pixelRatio= Integer.valueOf(params.get("pixelRatio"));
-            modelsList.forEach(s->{
-                if (s.getScreenWidth()==screenWidth && s.getScreenHeight()==screenHeight && pixelRatio==s.getPixelRatio()){
-                    dmCondition.setTimeZone(1);
-                    dmCondition.setIsChinese(1);
-                    dmCondition.setIsMobile(1);
-                    dmCondition.setIsSpecificDevice(1);
-                    dmCondition.setIsFbclid(1);
-                    dmCondition.setIsIp(1);
-                    dmCondition.setIsVpn(1);
-                }
-            });
-        }
-
-
-        //先判断ip是否开启白名单并且是否在白名单中 在判断是否开启ips点击数限制
-        if (dmCondition.getIpWhite() == 1 && dmCondition.getWhiteList().equals(ip)) {
-            // 清空某些标志
-            dmCondition.setTimeZone(0);
-            dmCondition.setIsChinese(0);
-            dmCondition.setIsMobile(0);
-            dmCondition.setIsSpecificDevice(0);
-            dmCondition.setIsFbclid(0);
-            dmCondition.setIsIp(0);
-            dmCondition.setIsVpn(0);
-        } else {
-            // 判断是否开启IP点击数限制
-            if (dmCondition.getIpLimits() == 1) {
-                String ipLimitsKey = redisUtil.buildKey("AoollyNumberIp", dmCondition.getAccessAddress());
-                String ipLimits = redisUtil.get(ipLimitsKey);
-                List<String> ipList = new ArrayList<>();
-                // 是否有该 key
-                if (ipLimits != null) {
-                    // 进行解析
-                    try {
-                        // 进行解析
-                        ipList = new Gson().fromJson(ipLimits, new TypeToken<List<String>>() {}.getType());
-                    } catch (JsonSyntaxException e) {
-                        // 处理 JSON 解析错误
-                        log.error("Failed to parse IP limits from Redis for key: {}", ipLimitsKey, e);
-                    }
-                }
-
-                // 查看当前 IP 是否在 ipList 中的出现次数超过三次
-                long count = ipList.stream().filter(s -> s.equals(ip)).count();
-                if (count >= 3) {
-                    dmCondition.setIsVpn(1);
-                    dmCondition.setVpnCode(1);
-                }
-            }
-        }
-        //判断所有条件是否过关
-        if(dmCondition.getTimeZone()==1 || dmCondition.getIsChinese()==1 || dmCondition.getIsMobile()==1 || dmCondition.getIsSpecificDevice()==1
-                || dmCondition.getIsFbclid()==1 || dmCondition.getIsIp()==1 || dmCondition.getIsVpn()==1){
-            dmResult.setDataSuccess(false);
-        }else {
-            // 所有条件都通过，可以进行访问
-            dmResult.setDataSuccess(true);
-        }
-        result.setData(dmResult);
-        dmCenterService.update(query);
-
-        return result;
-    }
     //无防分流
     @PostMapping("/protectGetLink")
     public Result<DmResult> protectGetLink(@RequestBody Map<String, String> params) throws Exception {
@@ -206,16 +106,18 @@ public class FbVpnStockController {
             Map<String, DmCondition> mapCondition = new Gson().fromJson(conMap, mapCon);
             dmCondition = mapCondition.get(domainName);
             //获取轮询链接
-            String fbLink = getFbLink(domainName, query);
+            String fbLink = getFbLink(domainName, query).get(0);
             dmResult.setLink(fbLink);
             result.setSuccess(true);
         } catch (Exception e) {
             result.setSuccess(false);
         }
-        dmCenterService.update(query);
+        String userAgent = params.get("userAgent");
+        DeviceDetectorPo deviceDetectorPo = Deevvi.parseUserAgent(userAgent);
         handledMap.put("shouldRedirect", "true");
         handledMap.put("logMessage","success");
-        dmCenterService.addAccessVpn(query,params,country,dmCondition,handledMap);
+        dmCenterService.update(query);
+        dmCenterService.addAccessVpn(query,params,country,dmCondition,handledMap,deviceDetectorPo);
         result.setData(dmResult);
         return result;
     }
@@ -239,22 +141,118 @@ public class FbVpnStockController {
             Type mapCon = new TypeToken<Map<String, DmCondition>>() {}.getType();
             Map<String, DmCondition> mapCondition = new Gson().fromJson(conMap, mapCon);
             DmCondition dmCondition = mapCondition.get(domainName);
+            String userAgent = params.get("userAgent");
+            DeviceDetectorPo deviceDetectorPo = Deevvi.parseUserAgent(userAgent);
             dmCenterService.update(query);
             handledMap.put("shouldRedirect", "true");
             handledMap.put("logMessage","success");
-            dmCenterService.addAccessVpn(query,params,country,dmCondition,handledMap);
+            dmCenterService.addAccessVpn(query,params,country,dmCondition,handledMap,deviceDetectorPo);
             result.setSuccess(true);
         } catch (JsonSyntaxException e) {
             result.setSuccess(false);
         }
         return result;
     }
+    //获取像素
+    private List<String> getPixel(String domainName)  {
+        DmPixel dmPixel = new DmPixel();
+        dmPixel.setDomain(domainName);
+        List<String> strings = dmPixelService.queryPixelIdsByDomain(dmPixel);
+        return strings;
+    }
+    //获取点击信息
+    @PostMapping("/getClickInfo")
+    public Result<String> getClickInfo(@RequestBody Map<String, String> params) throws Exception {
+        String domainName = params.getOrDefault("domainName", "defaultDomain").substring(0, params.get("domainName").length() - 1);
+        String dmCenterKey = redisUtil.buildKey("acooly", "dmCenterMap");
+        String jsonMap = redisUtil.get(dmCenterKey);
+        Type mapType = new TypeToken<Map<String, DmCenter>>() {
+        }.getType();
+        Map<String, DmCenter> map = new Gson().fromJson(jsonMap, mapType);
+        DmCenter query = map.get(domainName);
+        String ip = params.get("userIp");
+        String country = getCountrySetByIp(ip);
+        dmCenterService.addClickVpnCount(query,params,country);
+        return Result.ok("scuesss");
+    }
+    //获取落地页链接和是否允许访问和像素id
+    @PostMapping("/getPageLink")
+    public Result<DmResult> getPageLink(@RequestBody Map<String, String> params) throws Exception {
+        DmResult dmResult = new DmResult();
+        DmCondition dmCondition = null;
+        DeviceDetectorPo deviceDetectorPo=new DeviceDetectorPo();
+        DmCenter query = null;
+        boolean shouldRedirect = true;
+        String country="";
+        HashMap<String, String> handledMap = new HashMap<>();
+        Result<DmResult> result = new Result<>();
+        try {
+            String domainName = params.getOrDefault("domainName", "defaultDomain").substring(0, params.get("domainName").length() - 1);
+            String ip = params.get("userIp");
+            country = getCountrySetByIp(ip);
+            String dmCenterKey = redisUtil.buildKey("acooly", "dmCenterMap");
+            String jsonMap = redisUtil.get(dmCenterKey);
+            Type mapType = new TypeToken<Map<String, DmCenter>>() {}.getType();
+            Map<String, DmCenter> map = new Gson().fromJson(jsonMap, mapType);
+            query = map.get(domainName);
 
+            String dmConditionKey = redisUtil.buildKey("acooly", "dmConditionList");
+            String conMap = redisUtil.get(dmConditionKey);
 
+            //通过us
+            Type mapCon = new TypeToken<Map<String, DmCondition>>() {}.getType();
+            Map<String, DmCondition> mapCondition = new Gson().fromJson(conMap, mapCon);
+            dmCondition = mapCondition.get(domainName);
+            dmResult.setPixelList(getPixel(domainName));
+            dmCondition.setVpnCode(dmCondition.getIsVpn() == 1 ? getVpnSetCode(dmCondition, ip) : 0);
+            if (isInWhiteList(dmCondition, ip)) {
+                clearConditionFlags(dmCondition);
+            } else {
+                handleIpLimitConditions(dmCondition, ip);
+            }
+            //通过userAgent 获取设备信息
+            String userAgent = params.get("userAgent");
+            deviceDetectorPo = Deevvi.parseUserAgent(userAgent);
+            handledMap =  handleMobileConditions(dmCondition, params, country,deviceDetectorPo);
+            String redirect = handledMap.get("shouldRedirect");
+            shouldRedirect = Boolean.parseBoolean(redirect);
+            dmResult.setKey(query.getKeyy());
+            dmResult.setDataSuccess(shouldRedirect);
+            dmResult.setDetail(handledMap.get("logMessage"));
+            result.setData(dmResult);
+            result.setSuccess(true);
+        } catch (JsonSyntaxException e) {
+            result.setSuccess(false);
+        }
+        dmCenterService.addAccessPageVpn(query,params,country,dmCondition,handledMap,deviceDetectorPo);
+        return result;
+    }
 
+    @PostMapping("getShuntPageLink")
+    public Result<DmResult> getShuntPageLink(@RequestBody Map<String, String> params) throws Exception {
+        DmResult dmResult = new DmResult();
+        String domainName = params.getOrDefault("domainName", "defaultDomain").substring(0, params.get("domainName").length() - 1);
+        String dmCenterKey = redisUtil.buildKey("acooly", "dmCenterMap");
+        String jsonMap = redisUtil.get(dmCenterKey);
+        Type mapType = new TypeToken<Map<String, DmCenter>>() {
+        }.getType();
+        Map<String, DmCenter> map = new Gson().fromJson(jsonMap, mapType);
+        DmCenter query = map.get(domainName);
+        String ip = params.get("userIp");
+        String country = getCountrySetByIp(ip);
+        String fbLink = getFbLink(domainName, query).get(0);
+        String keyys = getFbLink(domainName, query).get(1);
+        dmResult.setKey(keyys);
+        dmResult.setLink(fbLink);
+        dmCenterService.addClickVpnCount(query,params,country);
+        return Result.ok(dmResult);
+    }
+
+    //获取轮询链接
     @PostMapping("/getShuntLink")
     public Result<DmResult> getShuntLink(@RequestBody Map<String, String> params) throws Exception {
         Result<DmResult> result = new Result<>();
+        DeviceDetectorPo deviceDetectorPo = new DeviceDetectorPo();
         DmResult dmResult = new DmResult();
         DmCondition dmCondition = null;
         DmCenter query = null;
@@ -277,7 +275,8 @@ public class FbVpnStockController {
             Map<String, DmCondition> mapCondition = new Gson().fromJson(conMap, mapCon);
             dmCondition = mapCondition.get(domainName);
             //获取轮询链接
-            String fbLink = getFbLink(domainName, query);
+            String fbLink = getFbLink(domainName, query).get(0);
+            String keyys = getFbLink(domainName, query).get(1);
 
             dmCondition.setVpnCode(dmCondition.getIsVpn() == 1 ? getVpnSetCode(dmCondition, ip) : 0);
             if (isInWhiteList(dmCondition, ip)) {
@@ -285,24 +284,29 @@ public class FbVpnStockController {
             } else {
                 handleIpLimitConditions(dmCondition, ip);
             }
-            handledMap =  handleMobileConditions(dmCondition, params, country);
+            //通过userAgent 获取设备信息
+            String userAgent = params.get("userAgent");
+            deviceDetectorPo = Deevvi.parseUserAgent(userAgent);
+            handledMap =  handleMobileConditions(dmCondition, params, country,deviceDetectorPo);
             String redirect = handledMap.get("shouldRedirect");
             shouldRedirect = Boolean.parseBoolean(redirect);
             dmResult.setDataSuccess(shouldRedirect);
             dmResult.setLink(fbLink);
+            dmResult.setKey(keyys);
             result.setData(dmResult);
             result.setSuccess(true);
         } catch (Exception e) {
             result.setSuccess(false);
         }
         //改变主数据的点击数
-        dmCenterService.update(query);
-        dmCenterService.addAccessVpn(query,params,country,dmCondition,handledMap);
+        dmCenterService.addAccessVpn(query,params,country,dmCondition,handledMap,deviceDetectorPo);
         return result;
     }
 
-    private String getFbLink(String domainName,DmCenter query){
+    private  List<String> getFbLink(String domainName,DmCenter query){
+        LinkedList<String> linkedList = new LinkedList<>();
         String link = "";
+        String keyy = "";
         DmDomain domain = new DmDomain();
         domain.setDomainName(domainName);
         if (query.getDiversion() == 1) {
@@ -322,13 +326,19 @@ public class FbVpnStockController {
             linkInt1.setCountLink(id);
             linkIntService.update(linkInt1);
             link = linkSrcs4.getLinkSrc();
+            keyy = linkSrcs4.getKeyy();
         } else {
-            link = dmDomainService.queryString(domain);
+            link = query.getLink();
+            keyy = query.getKeyy();
         }
         if (!StringUtils.isEmpty(link)) {
-            return link;
+            linkedList.add(link);
+            linkedList.add(keyy);
+            return linkedList;
         } else {
-            return "https://www.google.com";
+            linkedList.add("https://www.google.com");
+            linkedList.add(keyy);
+            return linkedList;
         }
     }
 
@@ -337,6 +347,7 @@ public class FbVpnStockController {
     public Result<DmResult> getVpnNumber(@RequestBody Map<String, String> params) throws Exception {
         Result<DmResult> result = new Result<>();
         DmResult dmResult = new DmResult();
+        DeviceDetectorPo deviceDetectorPo = new DeviceDetectorPo();
         DmCondition dmCondition = null;
         DmCenter query = null;
         String country="";
@@ -358,6 +369,9 @@ public class FbVpnStockController {
             Type mapCon = new TypeToken<Map<String, DmCondition>>() {}.getType();
             Map<String, DmCondition> mapCondition = new Gson().fromJson(conMap, mapCon);
             dmCondition = mapCondition.get(domainName);
+            //通过userAgent 获取设备信息
+            String userAgent = params.get("userAgent");
+            deviceDetectorPo = Deevvi.parseUserAgent(userAgent);
 
             dmCondition.setVpnCode(dmCondition.getIsVpn() == 1 ? getVpnSetCode(dmCondition, ip) : 0);
             if (isInWhiteList(dmCondition, ip)) {
@@ -365,18 +379,20 @@ public class FbVpnStockController {
             } else {
                 handleIpLimitConditions(dmCondition, ip);
             }
-            handledMap =  handleMobileConditions(dmCondition, params, country);
+            handledMap =  handleMobileConditions(dmCondition, params, country,deviceDetectorPo);
             String redirect = handledMap.get("shouldRedirect");
+
+
             shouldRedirect = Boolean.parseBoolean(redirect);
             dmResult.setDataSuccess(shouldRedirect);
+            dmResult.setKey(query.getKeyy());
             result.setData(dmResult);
             result.setSuccess(true);
         } catch (JsonSyntaxException e) {
             result.setSuccess(false);
         }
         //改变主数据的点击数
-        dmCenterService.addAccessVpn(query,params,country,dmCondition,handledMap);
-        dmCenterService.update(query);
+        dmCenterService.addAccessVpn(query,params,country,dmCondition,handledMap,deviceDetectorPo);
         log.info( "成功还是失败："+dmResult.toString());
         return result;
     }
@@ -509,11 +525,34 @@ public class FbVpnStockController {
 //        return map;
 //    }
 
-    private HashMap<String,String> handleMobileConditions(DmCondition dmCondition, Map<String, String> params,String country) {
+    private HashMap<String,String> handleMobileConditions(DmCondition dmCondition, Map<String, String> params,String country,
+                                                          DeviceDetectorPo deviceDetectorPo) {
         HashMap<String, String> map = new HashMap<>();
+        //是否通过
         Boolean shouldRedirect = true;
+        //不通过原因
         StringBuilder logMessages = new StringBuilder();
-        //待开发 记录不过关的信息返回给前端
+
+        //判断是否为无法识别设备
+        if(dmCondition.getIsIdentify() == 1){
+            Boolean found = deviceDetectorPo.getFound();
+            logIfNotRedirect(found!= null && found, "IsIdentify 未通过");
+            if (found!= null && !found){
+                shouldRedirect = false;
+                logMessages.append("\"是否为无法识别设备\": \"未通过\"");
+                }
+        }
+
+
+        //判断是否为爬虫机器人
+        if(dmCondition.getIsRobot() == 1){
+            Boolean isBot = deviceDetectorPo.getIsBot();
+            logIfNotRedirect(isBot!= null && isBot, "IsRobot 未通过");
+            if (isBot!= null && isBot){
+                shouldRedirect = false;
+                logMessages.append("\"是否为爬虫机器人\": \"未通过\"");
+            }
+        }
 
         //判断时区是否符合要求
         if (dmCondition.getTimeZone() == 1) {
@@ -538,12 +577,38 @@ public class FbVpnStockController {
 
         // 判断是否是中文访问
         if (dmCondition.getIsChinese() == 1) {
-            String isChinese = params.get("isChinese");
-            boolean equals = "false".equals(isChinese);
-            shouldRedirect &= equals;
-            logIfNotRedirect(equals, "IsChinese 未通过");
-            if(!equals){
-                appendLogMessage(logMessages, "\"中文检测\": \"未通过\"");
+//            String isChinese = params.get("isChinese");
+//            boolean equals = "false".equals(isChinese);
+//            shouldRedirect &= equals;
+//            logIfNotRedirect(equals, "IsChinese 未通过");
+//            if(!equals){
+//                appendLogMessage(logMessages, "\"中文检测\": \"未通过\"");
+//            }
+            String userLanguage = params.get("userLanguage");
+            String language = dmCondition.getLanguage();
+            List<String> languageList = Arrays.asList(language.split(","));
+
+            if (languageList.contains("zh") && userLanguage != null && userLanguage.contains("zh")) {
+                shouldRedirect = false;
+                logIfNotRedirect(false, "包含 zh，未通过");
+                appendLogMessage(logMessages, "\"中文检测\": \"包含 zh，未通过\"");
+            } else if (userLanguage != null && languageList.contains(userLanguage)) {
+                shouldRedirect = false;
+                appendLogMessage(logMessages, "\"语言检测\": \"未通过\"");
+            }
+        }
+
+        //当手机访问的时候
+        if(deviceDetectorPo.getIsMobile()!=null && deviceDetectorPo.getIsMobile()){
+            //当为手机的时候判断什么系统
+            String name = deviceDetectorPo.getOs().getName();
+            String version = deviceDetectorPo.getOs().getVersion();
+            String iosVersion = dmCondition.getIosVersion();
+            int i = compareVersions(iosVersion, version);
+            //如果i>0说明版本不过关
+            if(i>0){
+                shouldRedirect = false;
+                appendLogMessage(logMessages, "\"手机系统\": \"版本过低未通过\"");
             }
         }
 
@@ -556,6 +621,12 @@ public class FbVpnStockController {
             if(!equals){
                 appendLogMessage(logMessages, "\"设备必须为手机\": \"未通过\"");
             }
+//            Boolean isMobile = deviceDetectorPo.getIsMobile();
+//            logIfNotRedirect(isMobile != null && isMobile, "IsMobile 未通过");
+//            if (isMobile != null && !isMobile){
+//                shouldRedirect = false;
+//                appendLogMessage(logMessages, "\"设备必须为手机\": \"未通过\"");
+//            }
         }
 
         //判断vpn是否过关
@@ -568,15 +639,31 @@ public class FbVpnStockController {
             }
         }
 
-        //判断访问的是否包含华为
-        if ("Huawei".equals(params.get("isHuawei"))){
-            logIfNotRedirect(false, "IsHuawei 未通过");
-            shouldRedirect = false;
-            appendLogMessage(logMessages, "\"是否为华为\": \"未通过\"");
-        }
+
         //判断是否是特定设备访问
         boolean isSpecificDevice = true;
         if(dmCondition.getIsSpecificDevice()==1){
+            //ios低版本
+//            String isBannedIOS = params.get("isBannedIOS");
+//            if(isBannedIOS!=null && isBannedIOS.equals("true")){
+//                boolean equals= false;
+//                shouldRedirect &= equals;
+//                logIfNotRedirect(equals, "ios版本过低 未通过");
+//                appendLogMessage(logMessages, "\"ios版本过低\": \"未通过\"");
+//            }
+            //判断访问的是否包含华为
+            if ("Huawei".equals(params.get("isHuawei"))){
+                logIfNotRedirect(false, "IsHuawei 未通过");
+                shouldRedirect = false;
+                appendLogMessage(logMessages, "\"是否为华为\": \"未通过\"");
+            }
+
+            //判断是否为三星低端机
+            if ("BannedSamsung".equals(params.get("isSamsung"))){
+                logIfNotRedirect(false, "isBannedSamsung 未通过");
+                shouldRedirect = false;
+                appendLogMessage(logMessages, "\"是否为三星低端机\": \"未通过\"");
+            }
             if ("Mobile".equals(params.get("userMobile")) && "iOS".equals(params.get("isIOSS"))) {
                 String buildKey = redisUtil.buildKey("Acoolys", "dmModles");
                 String modelsMap = redisUtil.get(buildKey);
@@ -613,14 +700,29 @@ public class FbVpnStockController {
         return map;
 
     }
+    //比较系统版本号
+    private static int compareVersions(String version1, String version2) {
+        String[] parts1 = version1.split("\\.");
+        String[] parts2 = version2.split("\\.");
 
+        int length = Math.max(parts1.length, parts2.length);
+        for (int i = 0; i < length; i++) {
+            int num1 = i < parts1.length ? Integer.parseInt(parts1[i]) : 0;
+            int num2 = i < parts2.length ? Integer.parseInt(parts2[i]) : 0;
+
+            if (num1 != num2) {
+                return num1 - num2;
+            }
+        }
+        return 0;
+    }
     private void handleIpLimitConditions(DmCondition dmCondition, String ip) {
         if (dmCondition.getIpLimits() == 1) {
             String ipLimitsKey = redisUtil.buildKey("AoollyNumberIp", dmCondition.getAccessAddress());
             List<String> ipList = getCachedIpList(ipLimitsKey);
             if (ipList != null) {
                 long count = ipList.stream().filter(s -> s.equals(ip)).count();
-                if (count >= 1) {
+                if (count >= 2) {
                     dmCondition.setIsVpn(1);
                     dmCondition.setVpnCode(1);
                 }

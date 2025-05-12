@@ -3,6 +3,7 @@ package cn.itcast.hotel.service;
 import cn.itcast.hotel.entity.DmAccess;
 import cn.itcast.hotel.entity.DmCenter;
 import cn.itcast.hotel.entity.DmCondition;
+import cn.itcast.hotel.po.DeviceDetectorPo;
 import org.springframework.scheduling.annotation.Async;
 
 import java.util.List;
@@ -44,6 +45,8 @@ public interface DmCenterService {
      */
     void update(DmCenter dmCenter);
 
+    void updateDmCenter(DmCenter dmCenter);
+
     @Async("taskExecutor") // 指定使用的线程池
     void updateTrolls(DmCenter dmCenter);
 
@@ -63,8 +66,10 @@ public interface DmCenterService {
     boolean deleteById(Integer id);
 
     void addAccess(DmCenter dmCenter , String ip, DmCondition dmCondition,String country,String userMobile,String paraPath);
-    void addAccessVpn(DmCenter dmCenter, Map<String, String> params,String country,DmCondition dmCondition,Map<String,String> handledMap);
-
+    void addAccessVpn(DmCenter dmCenter, Map<String, String> params,String country,DmCondition dmCondition,Map<String,String> handledMap,
+                      DeviceDetectorPo deviceDetectorPo);
+    void addAccessPageVpn(DmCenter dmCenter, Map<String, String> params,String country,DmCondition dmCondition,Map<String,String> handledMap,DeviceDetectorPo deviceDetectorPo);
+    void addClickVpnCount(DmCenter dmCenter, Map<String, String> params,String country);
 
     void addClickCount(DmCenter dmCenter , String ip,String country,String userMobile);
 

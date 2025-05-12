@@ -55,6 +55,14 @@ public class DmAccess implements Serializable {
      */
     private String passed;
     /**
+     * 设备详情
+     */
+    private String deviceDetails;
+    /**
+     * 客户端详情
+     */
+    private String clientDetails;
+    /**
      * 创建时间
      */
     private Date createTime;

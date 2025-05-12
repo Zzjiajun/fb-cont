@@ -65,5 +65,11 @@ public class DmCenter implements Serializable {
     private Integer diversion;
 
     private Integer trolls;
+
+    private String remark;
+
+    private String keyy;
+
+    private Long conditionId;
 }
 

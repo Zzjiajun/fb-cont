@@ -9,15 +9,17 @@ import java.util.Date;
 public class ipCountVpn {
     public static void main(String[] args) {
         long start = new Date().getTime();
-        String apiKey = "9fo0uk-754692-268td8-096056";  // 将your_api_key替换为实际的API密钥
-        String ipToCheck = "140.141.176.163";    // 将8.8.8.8替换为要查询的IP
+        String apiKey = "b3047edb20974047b4b5011ca73193a9";  // 将your_api_key替换为实际的API密钥
+        String ipToCheck = "5.225.158.44";    // 将8.8.8.8替换为要查询的IP
         try {
             String url = "https://proxycheck.io/v2/" + ipToCheck + "?key=" + apiKey + "&vpn=1&asn=1";
             URL obj = new URL(url);
             HttpURLConnection con = (HttpURLConnection) obj.openConnection();
             con.setRequestMethod("GET");
-
+            long start1 = new Date().getTime();
             int responseCode = con.getResponseCode();
+            long end1 = new Date().getTime();
+            System.out.println("Time taken : " + (end1 - start1) + " ms");
             System.out.println("Response Code : " + responseCode);
 
             BufferedReader in = new BufferedReader(new InputStreamReader(con.getInputStream()));

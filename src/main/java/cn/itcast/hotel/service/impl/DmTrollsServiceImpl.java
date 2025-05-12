@@ -1,8 +1,11 @@
 package cn.itcast.hotel.service.impl;
 
+import cn.itcast.hotel.dao.DmCenterDao;
+import cn.itcast.hotel.entity.DmCenter;
 import cn.itcast.hotel.entity.DmTrolls;
 import cn.itcast.hotel.dao.DmTrollsDao;
 import cn.itcast.hotel.service.DmTrollsService;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
@@ -21,6 +24,9 @@ import java.util.List;
 public class DmTrollsServiceImpl implements DmTrollsService {
     @Resource
     private DmTrollsDao dmTrollsDao;
+
+    @Autowired
+    private DmCenterDao dmCenterDao;
 
     /**
      * 通过ID查询单条数据

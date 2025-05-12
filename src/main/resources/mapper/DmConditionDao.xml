@@ -10,6 +10,7 @@
         <result property="timeZone" column="time_zone" jdbcType="INTEGER"/>
         <result property="timeContinent" column="time_continent" jdbcType="VARCHAR"/>
         <result property="isChinese" column="is_chinese" jdbcType="INTEGER"/>
+        <result property="language" column="language" jdbcType="VARCHAR"/>
         <result property="isMobile" column="is_mobile" jdbcType="INTEGER"/>
         <result property="isSpecificDevice" column="is_specific_device" jdbcType="INTEGER"/>
         <result property="isFbclid" column="is_fbclid" jdbcType="INTEGER"/>
@@ -20,6 +21,10 @@
         <result property="ipLimits" column="ip_limits" jdbcType="INTEGER"/>
         <result property="ipWhite" column="ip_white" jdbcType="INTEGER"/>
         <result property="whiteList" column="white_list" jdbcType="VARCHAR"/>
+        <result property="isRobot" column="is_robot" jdbcType="INTEGER"/>
+        <result property="isIdentify" column="is_identify" jdbcType="INTEGER"/>
+        <result property="iosVersion" column="ios_version" jdbcType="VARCHAR"/>
+        <result property="andVersion" column="and_version" jdbcType="VARCHAR"/>
     </resultMap>
 
     <select id="getAll" resultMap="DmConditionMap">
@@ -50,6 +55,9 @@
         </if>
         <if test="isChinese != null">
             and is_chinese = #{isChinese}
+        </if>
+        <if test="language != null and language != ''">
+            and `language` = #{language}
         </if>
         <if test="isMobile != null">
             and is_mobile = #{isMobile}
@@ -84,6 +92,18 @@
         <if test="whiteList != null">
             and white_list = #{whiteList}
         </if>
+        <if test="isRobot != null">
+            and is_robot = #{isRobot}
+        </if>
+        <if test="isIdentify != null">
+            and is_identify = #{isIdentify}
+        </if>
+        <if test="iosVersion != null and iosVersion != ''">
+            and ios_version = #{iosVersion}
+        </if>
+        <if test="andVersion != null and andVersion != ''">
+            and and_version = #{andVersion}
+        </if>
         </where>
     </select>
 
@@ -113,6 +133,9 @@
             <if test="isChinese != null">
                 and is_chinese = #{isChinese}
             </if>
+            <if test="language != null and language != ''">
+                and `language` = #{language}
+            </if>
             <if test="isMobile != null">
                 and is_mobile = #{isMobile}
             </if>
@@ -139,6 +162,18 @@
             </if>
             <if test="whiteList != null">
                 and white_list = #{whiteList}
+            </if>
+            <if test="isRobot != null">
+                and is_robot = #{isRobot}
+            </if>
+            <if test="isIdentify != null">
+                and is_identify = #{isIdentify}
+            </if>
+            <if test="iosVersion != null and iosVersion != ''">
+                and ios_version = #{iosVersion}
+            </if>
+            <if test="andVersion != null and andVersion != ''">
+                and and_version = #{andVersion}
             </if>
         </where>
         limit #{pageable.offset}, #{pageable.pageSize}
@@ -170,6 +205,9 @@
             <if test="isChinese != null">
                 and is_chinese = #{isChinese}
             </if>
+            <if test="language != null and language != ''">
+                and `language` = #{language}
+            </if>
             <if test="isMobile != null">
                 and is_mobile = #{isMobile}
             </if>
@@ -196,6 +234,18 @@
             </if>
             <if test="whiteList != null">
                 and white_list = #{whiteList}
+            </if>
+            <if test="isRobot != null">
+                and is_robot = #{isRobot}
+            </if>
+            <if test="isIdentify != null">
+                and is_identify = #{isIdentify}
+            </if>
+            <if test="iosVersion != null and iosVersion != ''">
+                and ios_version = #{iosVersion}
+            </if>
+            <if test="andVersion != null and andVersion != ''">
+                and and_version = #{andVersion}
             </if>
         </where>
     </select>
@@ -246,6 +296,9 @@ user_name = values(user_name)access_address = values(access_address)ip_country =
             <if test="isChinese != null">
                 is_chinese = #{isChinese},
             </if>
+            <if test="language != null and language != ''">
+                `language` = #{language}
+            </if>
             <if test="isMobile != null">
                 is_mobile = #{isMobile},
             </if>
@@ -265,13 +318,25 @@ user_name = values(user_name)access_address = values(access_address)ip_country =
                 is_ip = #{isIp},
             </if>
             <if test="ipLimits != null">
-                and ip_limits= #{ipLimits}
+                ip_limits= #{ipLimits}
             </if>
             <if test="ipWhite != null">
-                and ip_white = #{ipWhite}
+                 ip_white = #{ipWhite}
             </if>
             <if test="whiteList != null">
-                and white_list = #{whiteList}
+                 white_list = #{whiteList}
+            </if>
+            <if test="isRobot != null">
+                is_robot = #{isRobot}
+            </if>
+            <if test="isIdentify != null">
+                 is_identify = #{isIdentify}
+            </if>
+            <if test="iosVersion != null and iosVersion != ''">
+                ios_version = #{iosVersion}
+            </if>
+            <if test="andVersion != null and andVersion != ''">
+                 and_version = #{andVersion}
             </if>
         </set>
         where id = #{id}

@@ -41,6 +41,11 @@ public class DmCondition implements Serializable {
      * 设备语言
      */
     private Integer isChinese;
+    /**
+     * 语言
+     */
+    private String language;
+
 /**
      * 移动设备
      */
@@ -81,5 +86,21 @@ public class DmCondition implements Serializable {
      * 白名单
      */
     private String whiteList;
+    /**
+     * 是否机器人
+     */
+    private Integer isRobot;
+    /**
+     * 无法识别设备
+     */
+    private Integer isIdentify;
+    /**
+     * ios系统
+     */
+    private String iosVersion;
+    /**
+     * 安卓系统
+     */
+    private String andVersion;
 }
 

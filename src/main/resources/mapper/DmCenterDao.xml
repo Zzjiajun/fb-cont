@@ -18,6 +18,9 @@
         <result property="displayOption" column="display_option" jdbcType="INTEGER"/>
         <result property="diversion" column="diversion" jdbcType="INTEGER"/>
         <result property="trolls" column="trolls" jdbcType="INTEGER"/>
+        <result property="remark" column="remark" jdbcType="VARCHAR"/>
+        <result property="keyy" column="keyy" jdbcType="VARCHAR"/>
+        <result property="conditionId" column="condition_id" jdbcType="BIGINT"/>
     </resultMap>
 
     <!--查询单个-->
@@ -30,8 +33,7 @@
 
     <!--查询指定行数据-->
     <select id="queryAllByLimit" resultMap="DmCenterMap">
-        select
-iduser_nameregionpixellinkdomainsecondary_domainserial_numbervisits_numberclicks_numbercreate_timeupdate_timedisplay_optiondiversion
+        select *
         from dm_center
         <where>
             <if test="id != null">
@@ -78,6 +80,15 @@ iduser_nameregionpixellinkdomainsecondary_domainserial_numbervisits_numberclicks
             </if>
             <if test="trolls != null">
                 and trolls = #{trolls}
+            </if>
+            <if test="remark != null">
+                and remark = #{remark}
+            </if>
+            <if test="keyy != null">
+                and keyy = #{keyy}
+            </if>
+            <if test="conditionId != null">
+                and condition_id = #{conditionId}
             </if>
         </where>
         limit #{pageable.offset}, #{pageable.pageSize}
@@ -132,6 +143,15 @@ iduser_nameregionpixellinkdomainsecondary_domainserial_numbervisits_numberclicks
             </if>
             <if test="trolls != null">
                 and trolls = #{trolls}
+            </if>
+            <if test="remark != null">
+                and remark = #{remark}
+            </if>
+            <if test="keyy != null">
+                and keyy = #{keyy}
+            </if>
+            <if test="conditionId != null">
+                and condition_id = #{conditionId}
             </if>
         </where>
     </select>
@@ -189,6 +209,15 @@ iduser_nameregionpixellinkdomainsecondary_domainserial_numbervisits_numberclicks
             <if test="trolls != null">
                 and trolls = #{trolls}
             </if>
+            <if test="remark != null">
+                and remark = #{remark}
+            </if>
+            <if test="keyy != null">
+                and keyy = #{keyy}
+            </if>
+            <if test="conditionId != null">
+                and condition_id = #{conditionId}
+            </if>
         </where>
     </select>
 
@@ -233,7 +262,7 @@ user_name = values(user_name)region = values(region)pixel = values(pixel)link = 
                 link = #{link},
             </if>
             <if test="domain != null and domain != ''">
-                domain = #{domain},
+                `domain` = #{domain},
             </if>
             <if test="secondaryDomain != null and secondaryDomain != ''">
                 secondary_domain = #{secondaryDomain},
@@ -260,7 +289,13 @@ user_name = values(user_name)region = values(region)pixel = values(pixel)link = 
                 diversion = #{diversion},
             </if>
             <if test="trolls != null">
-                 trolls = #{trolls}
+                 trolls = #{trolls},
+            </if>
+            <if test="remark != null">
+                 remark = #{remark}
+            </if>
+            <if test="conditionId != null">
+                condition_id = #{conditionId}
             </if>
         </set>
         where id = #{id}

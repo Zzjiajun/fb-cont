@@ -187,9 +187,8 @@ public class DmConditionServiceImpl implements DmConditionService {
                 String connectionType = ipData.getString("type");
                 String country = jsonResponse.optJSONObject(ip).optString("country", "unknown");
 
-                // 定义需要排除的国家/地区
                 List<String> typeList = Arrays.asList(
-                        "VPN","Compromised Server"
+                        "VPN","Compromised Server","Business"
                 );
                 log.info("type: " + connectionType);
                 // 判断是否为 VPN 或代理网络，并检查国家是否在排除列表中
@@ -210,7 +209,7 @@ public class DmConditionServiceImpl implements DmConditionService {
         StopWatch stopWatch = new StopWatch();
         stopWatch.start("演示1");
         AtomicInteger conde = new AtomicInteger();
-        String url = "https://pro.ip-api.com/json/" + ip + "?key=" + keyString + "&fields=status,isp,country,proxy,hosting,query";
+        String url = "https://pro.ip-api.com/json/" + ip + "?key=" + keyString + "&fields=status,country,isp,proxy,hosting,query";
         RestTemplate restTemplate = new RestTemplate();
         stopWatch.stop();
         log.info("演示1:{}",stopWatch.getTotalTimeSeconds());
@@ -228,7 +227,9 @@ public class DmConditionServiceImpl implements DmConditionService {
             String countryCode = jsonResponse.getString("country");
             String ips = jsonResponse.getString("isp");
             List<String> typeList = Arrays.asList(
-                    "VOCOM International Telecommunication, INC.","Cogent Communications","Google LLC"
+                    "VOCOM International Telecommunication, INC.","Cogent Communications","Google LLC",
+                    "Charter Communications Inc","T-Mobile USA, Inc.","Verizon Communications","AT&T Services, Inc.",
+                    "Charter Communications","TRUEMOVE","Frontier Communications Solutions"
             );
             if (proxyStatus || hosting ||typeList.contains(ips) || conuntryList.contains(countryCode)) {
                 conde.set(1);
