@@ -69,10 +69,14 @@ public interface DmCenterService {
     void addAccessVpn(DmCenter dmCenter, Map<String, String> params,String country,DmCondition dmCondition,Map<String,String> handledMap,
                       DeviceDetectorPo deviceDetectorPo);
     void addAccessPageVpn(DmCenter dmCenter, Map<String, String> params,String country,DmCondition dmCondition,Map<String,String> handledMap,DeviceDetectorPo deviceDetectorPo);
-    void addClickVpnCount(DmCenter dmCenter, Map<String, String> params,String country);
+    void addClickVpnCount(DmCenter dmCenter, Map<String, String> params,String country,DeviceDetectorPo deviceDetectorPo);
 
     void addClickCount(DmCenter dmCenter , String ip,String country,String userMobile);
 
     void addTrolls(DmCenter dmCenter,String ip ,String country,String userMobile,String paraPath);
+
+    //测试
+    void addAccessIpVpn(DmCenter dmCenter, Map<String, String> params,Map<String,String> ipInfo,DmCondition dmCondition,Map<String,String> handledMap,
+                      DeviceDetectorPo deviceDetectorPo);
 
 }

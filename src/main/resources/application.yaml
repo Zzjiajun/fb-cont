@@ -1,15 +1,42 @@
 server:
   port: 3031
   tomcat:
-    accept-count: 200
+    accept-count: 200 # 合理分配等待队列
     threads:
-      max: 800
-    connection-timeout: 20000
+      max: 800 # 合理分配线程数，为其他项目留出资源
+      min-spare: 30 # 最小空闲线程数
+    connection-timeout: 40000 # 保持原有超时时间
+    max-connections: 5000 # 合理分配最大连接数
+    # 针对多项目环境的优化配置
+    processor-cache: 100 # 处理器缓存大小
+    tcp-no-delay: true # 启用TCP_NODELAY
+    keep-alive-timeout: 60000 # Keep-Alive超时时间
 spring:
   redis:
     host: 127.0.0.1
     port: 6379
     database: 0
+    # Redis连接池优化配置 - 针对多项目环境优化
+    lettuce:
+      pool:
+        max-active: 200 # 合理分配活跃连接数，为其他项目留出资源
+        max-idle: 60 # 合理分配空闲连接数
+        min-idle: 20 # 最小空闲连接数，保持响应速度
+        max-wait: 60ms # 连接池最大阻塞等待时间
+        time-between-eviction-runs: 100s # 空闲连接检测间隔
+        min-evictable-idle-time: 120s # 最小空闲时间
+        num-tests-per-eviction-run: 10 # 每次检测的连接数
+    # 连接超时配置
+    timeout: 100ms # 操作超时时间，进一步减少等待
+    connect-timeout: 60ms # 建立连接超时时间，快速失败
+    # 其他优化配置
+    shutdown-timeout: 100ms # 关闭超时时间，快速关闭
+    # 客户端配置
+    client-name: hotel-demo # 客户端名称，便于监控
+    # 集群配置（如果使用集群）
+    # cluster:
+    #   nodes: 127.0.0.1:6379,127.0.0.1:6380,127.0.0.1:6381
+    #   max-redirects: 3
   datasource:
     url: jdbc:mysql://127.0.0.1:3306/table_test
     username: root
@@ -23,3 +50,9 @@ logging:
 geolite2:
   file:
     name: GeoLite2-Country.mmdb
+geolite3:
+  file:
+    name: GeoLite2-ASN.mmdb
+geolite4:
+  file:
+    name: GeoLite2-City.mmdb

@@ -197,6 +197,10 @@ public class DmConditionServiceImpl implements DmConditionService {
                 } else {
                     conde.set(0);
                 }
+                //当type为Business
+                if ("Business".equals(connectionType)){
+                    conde.set(2);
+                }
             } catch (Exception e) {
                 log.error("Exception occurred: " + e.getMessage());
                 conde.set(0);

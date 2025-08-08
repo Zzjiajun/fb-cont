@@ -25,6 +25,8 @@
         <result property="isIdentify" column="is_identify" jdbcType="INTEGER"/>
         <result property="iosVersion" column="ios_version" jdbcType="VARCHAR"/>
         <result property="andVersion" column="and_version" jdbcType="VARCHAR"/>
+        <result property="isBusiness" column="is_business" jdbcType="INTEGER"/>
+        <result property="isVirtual" column="is_virtual" jdbcType="INTEGER"/>
     </resultMap>
 
     <select id="getAll" resultMap="DmConditionMap">
@@ -104,6 +106,12 @@
         <if test="andVersion != null and andVersion != ''">
             and and_version = #{andVersion}
         </if>
+        <if test="isBusiness != null">
+            and is_business = #{isBusiness}
+        </if>
+        <if test="isVirtual != null">
+            and is_virtual = #{isVirtual}
+        </if>
         </where>
     </select>
 
@@ -174,6 +182,12 @@
             </if>
             <if test="andVersion != null and andVersion != ''">
                 and and_version = #{andVersion}
+            </if>
+            <if test="isBusiness != null">
+                and is_business = #{isBusiness}
+            </if>
+            <if test="isVirtual != null">
+                and is_virtual = #{isVirtual}
             </if>
         </where>
         limit #{pageable.offset}, #{pageable.pageSize}
@@ -246,6 +260,12 @@
             </if>
             <if test="andVersion != null and andVersion != ''">
                 and and_version = #{andVersion}
+            </if>
+            <if test="isBusiness != null">
+                and is_business = #{isBusiness}
+            </if>
+            <if test="isVirtual != null">
+                and is_virtual = #{isVirtual}
             </if>
         </where>
     </select>
@@ -337,6 +357,12 @@ user_name = values(user_name)access_address = values(access_address)ip_country =
             </if>
             <if test="andVersion != null and andVersion != ''">
                  and_version = #{andVersion}
+            </if>
+            <if test="isBusiness != null">
+                 is_business = #{isBusiness}
+            </if>
+            <if test="isVirtual != null">
+                is_virtual = #{isVirtual}
             </if>
         </set>
         where id = #{id}

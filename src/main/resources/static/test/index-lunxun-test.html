@@ -1,0 +1,507 @@
+<!DOCTYPE html>
+<html lang="zh">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>轮询链接获取测试</title>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        margin: 0;
+        padding: 20px;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        min-height: 100vh;
+      }
+      .container {
+        max-width: 900px;
+        margin: 0 auto;
+        background: rgba(255, 255, 255, 0.1);
+        padding: 30px;
+        border-radius: 15px;
+        -webkit-backdrop-filter: blur(10px);
+        backdrop-filter: blur(10px);
+      }
+      .status {
+        background: rgba(0, 0, 0, 0.3);
+        padding: 15px;
+        border-radius: 8px;
+        margin: 10px 0;
+        font-family: monospace;
+        max-height: 300px;
+        overflow-y: auto;
+      }
+      .success {
+        color: #4ade80;
+      }
+      .warning {
+        color: #fbbf24;
+      }
+      .error {
+        color: #f87171;
+      }
+      .info {
+        color: #60a5fa;
+      }
+      .timer {
+        font-size: 2em;
+        text-align: center;
+        margin: 20px 0;
+        font-weight: bold;
+      }
+      .progress-bar {
+        width: 100%;
+        height: 20px;
+        background: rgba(255, 255, 255, 0.2);
+        border-radius: 10px;
+        overflow: hidden;
+        margin: 10px 0;
+      }
+      .progress-fill {
+        height: 100%;
+        background: linear-gradient(90deg, #4ade80, #22c55e);
+        width: 0%;
+        transition: width 0.3s ease;
+      }
+      .stats {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 15px;
+        margin: 20px 0;
+      }
+      .stat-card {
+        background: rgba(255, 255, 255, 0.1);
+        padding: 15px;
+        border-radius: 8px;
+        text-align: center;
+      }
+      .stat-value {
+        font-size: 1.5em;
+        font-weight: bold;
+        color: #4ade80;
+      }
+      .stat-label {
+        font-size: 0.9em;
+        opacity: 0.8;
+      }
+      .link-display {
+        background: rgba(0, 0, 0, 0.3);
+        padding: 15px;
+        border-radius: 8px;
+        margin: 15px 0;
+        word-break: break-all;
+      }
+      .link-display a {
+        color: #4ade80;
+        text-decoration: none;
+      }
+      .link-display a:hover {
+        text-decoration: underline;
+      }
+    </style>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/mobile-detect/1.4.5/mobile-detect.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/ua-parser-js@2.0.0-beta.2/dist/ua-parser.min.js"></script>
+  </head>
+  <body>
+    <div class="container">
+      <h1>🔄 轮询链接获取测试</h1>
+      <p>这个页面演示了优化的轮询链接获取功能</p>
+      <p>
+        <strong>注意：</strong
+        >protectGetLink接口会自动异步记录访问数据，无需额外调用
+      </p>
+
+      <div class="timer" id="timer">0.00ms</div>
+      <div class="progress-bar">
+        <div class="progress-fill" id="progress"></div>
+      </div>
+
+      <div class="stats">
+        <div class="stat-card">
+          <div class="stat-value" id="ipTime">-</div>
+          <div class="stat-label">IP获取耗时</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value" id="linkTime">-</div>
+          <div class="stat-label">链接获取耗时</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value" id="jumpTime">-</div>
+          <div class="stat-label">跳转耗时</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value" id="totalTime">-</div>
+          <div class="stat-label">总耗时</div>
+        </div>
+      </div>
+
+      <div id="linkResult" class="link-display" style="display: none">
+        <h3>获取到的轮询链接：</h3>
+        <div id="linkContent"></div>
+        <div id="keyContent" style="margin-top: 10px"></div>
+      </div>
+
+      <div id="status" class="status">
+        <div class="info">⏳ 正在初始化...</div>
+      </div>
+
+      <button
+        onclick="testLunxun()"
+        style="
+          background: #4ade80;
+          color: white;
+          border: none;
+          padding: 15px 30px;
+          border-radius: 8px;
+          font-size: 16px;
+          cursor: pointer;
+          margin: 10px 5px;
+        "
+      >
+        🔄 测试轮询链接获取
+      </button>
+
+      <button
+        onclick="testWithJump()"
+        style="
+          background: #fbbf24;
+          color: white;
+          border: none;
+          padding: 15px 30px;
+          border-radius: 8px;
+          font-size: 16px;
+          cursor: pointer;
+          margin: 10px 5px;
+        "
+      >
+        🚀 测试获取并跳转
+      </button>
+
+      <button
+        onclick="clearStatus()"
+        style="
+          background: #f87171;
+          color: white;
+          border: none;
+          padding: 15px 30px;
+          border-radius: 8px;
+          font-size: 16px;
+          cursor: pointer;
+          margin: 10px 5px;
+        "
+      >
+        🗑️ 清空日志
+      </button>
+    </div>
+
+    <script>
+      let startTime, ipTime, linkTime, jumpTime, totalTime;
+
+      function updateStatus(message, type = "info") {
+        const status = document.getElementById("status");
+        const className =
+          type === "success"
+            ? "success"
+            : type === "warning"
+            ? "warning"
+            : type === "error"
+            ? "error"
+            : "info";
+        status.innerHTML += `<div class="${className}">${new Date().toLocaleTimeString()} - ${message}</div>`;
+        status.scrollTop = status.scrollHeight;
+      }
+
+      function updateProgress(percent) {
+        document.getElementById("progress").style.width = percent + "%";
+      }
+
+      function updateTimer() {
+        if (startTime) {
+          const elapsed = performance.now() - startTime;
+          document.getElementById("timer").textContent =
+            elapsed.toFixed(2) + "ms";
+        }
+      }
+
+      function generateSessionId() {
+        return (
+          "test_lunxun_" +
+          Date.now() +
+          "_" +
+          Math.random().toString(36).substr(2, 9)
+        );
+      }
+
+      function collectDeviceInfo() {
+        const md = new MobileDetect(window.navigator.userAgent);
+        const urlParams = new URLSearchParams(window.location.search);
+        const hasQueryParams = urlParams.toString() !== "";
+        const parser = new UAParser();
+        const resultPar = parser.getResult();
+
+        const deviceType = md.mobile() ? "Mobile" : "PC";
+        const isMobile = md.mobile() !== null || md.tablet() !== null;
+        const isIOS = md.is("iOS")
+          ? "iOS"
+          : md.is("AndroidOS")
+          ? "Android"
+          : "Other";
+        const userAgent = navigator.userAgent;
+        const screenWidth = window.screen.width;
+        const screenHeight = window.screen.height;
+        const pixelRatio = window.devicePixelRatio;
+        const timezoneName = Intl.DateTimeFormat().resolvedOptions().timeZone;
+        const continent = timezoneName.split("/")[0];
+        const userLanguage = navigator.language || navigator.userLanguage;
+
+        let codefb = "";
+        if (urlParams.get("utm_source") === "fb" && urlParams.has("fbclid")) {
+          codefb = "Facebook广告访问的。";
+        } else if (urlParams.has("fbclid")) {
+          codefb = "Facebook链接访问的。";
+        } else if (urlParams.get("utm_source") === "fb") {
+          codefb = "Facebook广告访问的。";
+        } else if (urlParams.has("ttclid")) {
+          codefb = "TikTok链接访问的。";
+        } else {
+          codefb = "不是Facebook或TikTok";
+        }
+
+        // 获取设备型号
+        const modelSM = resultPar.device.model;
+        let isSamsung = "Not Samsung";
+        if (modelSM && modelSM.startsWith("SM-G")) {
+          const modelNumber = parseInt(modelSM.match(/\d+/)[0], 10);
+          if (modelNumber < 960) {
+            isSamsung = "BannedSamsung";
+          } else {
+            isSamsung = "Samsung";
+          }
+        }
+
+        return {
+          domainName: window.location.host + window.location.pathname,
+          userMobile: deviceType,
+          paraPath: hasQueryParams,
+          isIOSS: isIOS,
+          fb: codefb,
+          screenWidth: screenWidth,
+          screenHeight: screenHeight,
+          pixelRatio: pixelRatio,
+          continent: continent,
+          isMobile: isMobile,
+          userLanguage: userLanguage,
+          userAgent: userAgent,
+          isSamsung: isSamsung,
+          timestamp: new Date().toISOString(),
+          sessionId: generateSessionId(),
+        };
+      }
+
+      async function testLunxun() {
+        startTime = performance.now();
+        updateStatus("🔄 开始轮询链接获取测试...", "info");
+        updateProgress(10);
+
+        const data = collectDeviceInfo();
+        updateProgress(20);
+        updateStatus("📱 设备信息收集完成", "success");
+
+        try {
+          // 第一步：获取IP地址
+          const ipStart = performance.now();
+          updateStatus("🌐 开始获取IP地址...", "info");
+
+          const ipDataResponse = await fetch("get_ip_info.php").catch(() =>
+            fetch("https://ipapi.co/json/")
+          );
+          const ipData = await ipDataResponse.json();
+          const ip = ipData.ip;
+
+          ipTime = performance.now() - ipStart;
+          updateStatus(
+            `✅ IP获取完成，耗时: ${ipTime.toFixed(2)}ms，IP: ${ip}`,
+            "success"
+          );
+          updateProgress(40);
+
+          // 第二步：获取轮询链接
+          const linkStart = performance.now();
+          updateStatus("🔗 开始获取轮询链接...", "info");
+
+          const response = await fetch(
+            "http://127.0.0.1:3031/fbVpnStock/protectGetLink",
+            {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                ...data,
+                userIp: ip,
+              }),
+            }
+          );
+
+          const responseData = await response.json();
+          linkTime = performance.now() - linkStart;
+
+          if (
+            responseData.success &&
+            responseData.data &&
+            responseData.data.link
+          ) {
+            updateStatus(
+              `✅ 轮询链接获取成功，耗时: ${linkTime.toFixed(2)}ms`,
+              "success"
+            );
+            updateProgress(80);
+
+            // 显示获取到的链接
+            document.getElementById("linkResult").style.display = "block";
+            document.getElementById("linkContent").innerHTML = `
+              <strong>链接:</strong> <a href="${responseData.data.link}" target="_blank">${responseData.data.link}</a>
+            `;
+            document.getElementById("keyContent").innerHTML = `
+              <strong>Key:</strong> ${responseData.data.key || "无"}
+            `;
+
+            totalTime = performance.now() - startTime;
+            updateProgress(100);
+
+            // 更新统计
+            document.getElementById("ipTime").textContent =
+              ipTime.toFixed(2) + "ms";
+            document.getElementById("linkTime").textContent =
+              linkTime.toFixed(2) + "ms";
+            document.getElementById("totalTime").textContent =
+              totalTime.toFixed(2) + "ms";
+
+            updateStatus(
+              `🎉 测试完成！总耗时: ${totalTime.toFixed(2)}ms`,
+              "success"
+            );
+            updateStatus("💡 轮询链接获取成功，可以进行跳转测试", "info");
+          } else {
+            updateStatus(
+              `❌ 轮询链接获取失败: ${JSON.stringify(responseData)}`,
+              "error"
+            );
+            updateProgress(100);
+          }
+        } catch (error) {
+          updateStatus(`❌ 测试失败: ${error.message}`, "error");
+          updateProgress(100);
+        }
+      }
+
+      async function testWithJump() {
+        startTime = performance.now();
+        updateStatus("🚀 开始获取并跳转测试...", "info");
+        updateProgress(10);
+
+        const data = collectDeviceInfo();
+        updateProgress(20);
+
+        try {
+          // 获取IP地址
+          const ipStart = performance.now();
+          const ipDataResponse = await fetch("get_ip_info.php").catch(() =>
+            fetch("https://ipapi.co/json/")
+          );
+          const ipData = await ipDataResponse.json();
+          const ip = ipData.ip;
+
+          ipTime = performance.now() - ipStart;
+          updateStatus(
+            `✅ IP获取完成，耗时: ${ipTime.toFixed(2)}ms`,
+            "success"
+          );
+          updateProgress(40);
+
+          // 获取轮询链接
+          const linkStart = performance.now();
+          const response = await fetch(
+            "http://127.0.0.1:3031/fbVpnStock/protectGetLink",
+            {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                ...data,
+                userIp: ip,
+              }),
+            }
+          );
+
+          const responseData = await response.json();
+          linkTime = performance.now() - linkStart;
+
+          if (
+            responseData.success &&
+            responseData.data &&
+            responseData.data.link
+          ) {
+            updateStatus(
+              `✅ 轮询链接获取成功，耗时: ${linkTime.toFixed(2)}ms`,
+              "success"
+            );
+            updateProgress(70);
+
+            // 跳转
+            const jumpStart = performance.now();
+            updateStatus("⚡ 开始跳转到轮询链接...", "warning");
+
+            // 模拟跳转（实际测试时替换为真实跳转）
+            setTimeout(() => {
+              jumpTime = performance.now() - jumpStart;
+              totalTime = performance.now() - startTime;
+
+              document.getElementById("jumpTime").textContent =
+                jumpTime.toFixed(2) + "ms";
+              document.getElementById("totalTime").textContent =
+                totalTime.toFixed(2) + "ms";
+
+              updateStatus(
+                `✅ 跳转完成，跳转耗时: ${jumpTime.toFixed(2)}ms`,
+                "success"
+              );
+              updateStatus(
+                `🎉 总耗时: ${totalTime.toFixed(2)}ms，目标链接: ${
+                  responseData.data.link
+                }`,
+                "success"
+              );
+              updateStatus("💡 实际环境中会立即跳转到目标链接", "info");
+
+              updateProgress(100);
+            }, 100);
+          } else {
+            updateStatus(`❌ 轮询链接获取失败，无法跳转`, "error");
+            updateProgress(100);
+          }
+        } catch (error) {
+          updateStatus(`❌ 跳转测试失败: ${error.message}`, "error");
+          updateProgress(100);
+        }
+      }
+
+      function clearStatus() {
+        document.getElementById("status").innerHTML =
+          '<div class="info">日志已清空</div>';
+        document.getElementById("linkResult").style.display = "none";
+        document.getElementById("progress").style.width = "0%";
+        document.getElementById("timer").textContent = "0.00ms";
+
+        // 重置统计
+        document.getElementById("ipTime").textContent = "-";
+        document.getElementById("linkTime").textContent = "-";
+        document.getElementById("jumpTime").textContent = "-";
+        document.getElementById("totalTime").textContent = "-";
+      }
+
+      // 启动定时器
+      setInterval(updateTimer, 16); // 60fps
+
+      // 页面加载完成
+      updateStatus("✅ 页面加载完成，可以开始测试", "success");
+    </script>
+  </body>
+</html>

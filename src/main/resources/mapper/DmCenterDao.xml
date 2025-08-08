@@ -292,7 +292,10 @@ user_name = values(user_name)region = values(region)pixel = values(pixel)link = 
                  trolls = #{trolls},
             </if>
             <if test="remark != null">
-                 remark = #{remark}
+                 remark = #{remark},
+            </if>
+            <if test="keyy != null">
+                 keyy = #{keyy},
             </if>
             <if test="conditionId != null">
                 condition_id = #{conditionId}

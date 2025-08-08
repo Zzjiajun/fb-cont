@@ -2,6 +2,7 @@ package cn.itcast.hotel.web;
 
 
 import cn.itcast.hotel.entity.*;
+import cn.itcast.hotel.po.DeviceDetectorPo;
 import cn.itcast.hotel.service.*;
 import cn.itcast.hotel.util.RedisUtils;
 import cn.itcast.hotel.util.Result;
@@ -28,6 +29,7 @@ import java.lang.reflect.Type;
 import java.net.*;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -619,6 +621,7 @@ public class HotelController {
         redisUtil.set(buildKey, new Gson().toJson(map));
         return Result.ok(buildKey);
     }
+
 
 
     @PostMapping("/getLink2")

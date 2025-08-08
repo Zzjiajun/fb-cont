@@ -14,8 +14,8 @@ import okhttp3.*;
 public class Ipapis {
 
     public static void main(String[] args) throws Exception {
-        String version1 = "15.8.7";
-        String version2="15.7.8";
+        String version1 = "16.8.7";
+        String version2="17.8.6";
         int result = comVersions(version1, version2);
         System.out.println(result);
         boolean b = compareVersion(version1, version2);
@@ -38,6 +38,7 @@ public class Ipapis {
         }
         return 0;
     }
+
 
 
     private static boolean compareVersion(String version, String iosVersion) {
